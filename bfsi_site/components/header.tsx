@@ -16,17 +16,17 @@ const topNavigation = [
 const mainNavigation = [
   {
     name: "Banking",
-    href: "/banking",
+    href: "/products?category=accounts",
     subcategories: ["Accounts & services"],
   },
   {
     name: "Borrowing",
-    href: "/borrowing",
+    href: "/products?category=loans",
     subcategories: ["Cards & loans"],
   },
   {
     name: "Investing",
-    href: "/investing",
+    href: "/products?category=insurance",
     subcategories: ["Wealth & Insurance"],
   },
   {
@@ -88,7 +88,7 @@ export function Header({ forceScrolled = false }: { forceScrolled?: boolean }) {
               href="/login"
               className="rounded bg-primary px-3 py-1 text-xs font-semibold text-white hover:bg-primary/90"
             >
-              Log On
+              Log In
             </Link>
           </div>
         </div>
@@ -180,7 +180,7 @@ export function Header({ forceScrolled = false }: { forceScrolled?: boolean }) {
                       <Link href="/register">Register</Link>
                     </Button>
                     <Button asChild className="w-full">
-                      <Link href="/login">Log On</Link>
+                      <Link href="/login">Log In</Link>
                     </Button>
                   </div>
                 </div>
