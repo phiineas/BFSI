@@ -48,7 +48,7 @@ export default function ProductsScreen() {
                         <Card key={product.id} className="bg-card">
                             <CardHeader className="flex-row items-start gap-4 space-y-0">
                                 <View className="h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                                    <Icon size={24} color="#2563eb" />
+                                    <Icon size={24} color="hsl(0, 84%, 51%)" />
                                 </View>
                                 <View className="flex-1">
                                     <View className="flex-row justify-between items-start">
@@ -66,7 +66,7 @@ export default function ProductsScreen() {
                                 <Text className="text-muted-foreground mb-4">{product.description}</Text>
 
                                 <View className="flex-row items-center gap-2 mb-4">
-                                    <Star size={16} color="#2563eb" fill="#2563eb" />
+                                    <Star size={16} color="hsl(0, 84%, 51%)" fill="hsl(0, 84%, 51%)" />
                                     <Text className="text-foreground font-medium">{product.rating}</Text>
                                     <Text className="text-muted-foreground text-xs">({product.reviews} reviews)</Text>
                                 </View>
@@ -74,7 +74,7 @@ export default function ProductsScreen() {
                                 <View className="gap-2 mb-6">
                                     {product.features.slice(0, 3).map((feature, i) => (
                                         <View key={i} className="flex-row items-center gap-2">
-                                            <CheckCircle2 size={16} color="#2563eb" />
+                                            <CheckCircle2 size={16} color="hsl(0, 84%, 51%)" />
                                             <Text className="text-muted-foreground text-sm">{feature}</Text>
                                         </View>
                                     ))}

@@ -12,126 +12,114 @@ export default function RegisterScreen() {
     const router = useRouter();
 
     const handleRegister = () => {
-        // Navigate to Tabs / Dashboard
         router.replace('/(tabs)');
     };
 
     return (
-        <ScrollView contentContainerClassName="flex-grow bg-background px-6 py-12 justify-center">
+        <ScrollView contentContainerClassName="flex-grow bg-background" keyboardShouldPersistTaps="handled">
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Logo */}
-            <View className="flex-row items-center justify-center gap-3 mb-8">
-                <View className="h-12 w-12 items-center justify-center rounded-lg bg-primary">
-                    <Shield size={28} color="white" />
+            {/* Red Header Section */}
+            <View className="bg-primary pt-20 pb-16 px-6 rounded-b-[40px]">
+                <View className="flex-row items-center gap-3 mb-6">
+                    <View className="h-12 w-12 items-center justify-center rounded-xl bg-white">
+                        <Shield size={28} color="hsl(0, 84%, 51%)" />
+                    </View>
+                    <Text className="text-2xl font-bold text-white">SecureBank</Text>
                 </View>
-                <Text className="text-2xl font-bold text-foreground">SecureBank</Text>
+                <Text className="text-3xl font-bold text-white">Create Account</Text>
+                <Text className="text-white/80 mt-2">Join millions of happy customers</Text>
             </View>
 
-            {/* Header */}
-            <View className="items-center mb-8">
-                <Text className="text-3xl font-bold text-foreground">Create Account</Text>
-                <Text className="mt-2 text-muted-foreground text-center">Join millions of satisfied customers today</Text>
-            </View>
-
-            {/* Form */}
-            <View className="gap-6">
-                {/* Name */}
-                <View className="gap-2">
-                    <Text className="text-sm font-medium text-foreground">Full Name</Text>
-                    <View className="relative">
-                        <View className="absolute inset-y-0 left-0 pl-3 justify-center z-10 w-10">
+            {/* Form Card */}
+            <View className="px-6 -mt-8">
+                <View className="bg-card rounded-2xl p-6 border border-border shadow-sm">
+                    {/* Name */}
+                    <View className="mb-5">
+                        <Text className="text-sm font-medium text-foreground mb-2">Full Name</Text>
+                        <View className="flex-row items-center border border-input rounded-xl bg-background px-4">
                             <User size={20} color="#64748b" />
+                            <TextInput
+                                className="flex-1 py-3.5 px-3 text-foreground"
+                                placeholder="John Doe"
+                                placeholderTextColor="#64748b"
+                                value={name}
+                                onChangeText={setName}
+                            />
                         </View>
-                        <TextInput
-                            className="flex-1 w-full pl-10 pr-3 py-3 border border-input rounded-lg bg-background text-foreground"
-                            placeholder="John Doe"
-                            placeholderTextColor="#64748b"
-                            value={name}
-                            onChangeText={setName}
-                        />
                     </View>
-                </View>
 
-                {/* Email */}
-                <View className="gap-2">
-                    <Text className="text-sm font-medium text-foreground">Email Address</Text>
-                    <View className="relative">
-                        <View className="absolute inset-y-0 left-0 pl-3 justify-center z-10 w-10">
+                    {/* Email */}
+                    <View className="mb-5">
+                        <Text className="text-sm font-medium text-foreground mb-2">Email Address</Text>
+                        <View className="flex-row items-center border border-input rounded-xl bg-background px-4">
                             <Mail size={20} color="#64748b" />
+                            <TextInput
+                                className="flex-1 py-3.5 px-3 text-foreground"
+                                placeholder="you@example.com"
+                                placeholderTextColor="#64748b"
+                                value={email}
+                                onChangeText={setEmail}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                            />
                         </View>
-                        <TextInput
-                            className="flex-1 w-full pl-10 pr-3 py-3 border border-input rounded-lg bg-background text-foreground"
-                            placeholder="you@example.com"
-                            placeholderTextColor="#64748b"
-                            value={email}
-                            onChangeText={setEmail}
-                        />
                     </View>
-                </View>
 
-                {/* Password */}
-                <View className="gap-2">
-                    <Text className="text-sm font-medium text-foreground">Password</Text>
-                    <View className="relative">
-                        <View className="absolute inset-y-0 left-0 pl-3 justify-center z-10 w-10">
+                    {/* Password */}
+                    <View className="mb-6">
+                        <Text className="text-sm font-medium text-foreground mb-2">Password</Text>
+                        <View className="flex-row items-center border border-input rounded-xl bg-background px-4">
                             <Lock size={20} color="#64748b" />
+                            <TextInput
+                                className="flex-1 py-3.5 px-3 text-foreground"
+                                placeholder="Create a strong password"
+                                placeholderTextColor="#64748b"
+                                secureTextEntry={!showPassword}
+                                value={password}
+                                onChangeText={setPassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                {showPassword ? (
+                                    <EyeOff size={20} color="#64748b" />
+                                ) : (
+                                    <Eye size={20} color="#64748b" />
+                                )}
+                            </TouchableOpacity>
                         </View>
-                        <TextInput
-                            className="flex-1 w-full pl-10 pr-12 py-3 border border-input rounded-lg bg-background text-foreground"
-                            placeholder="Create a strong password"
-                            placeholderTextColor="#64748b"
-                            secureTextEntry={!showPassword}
-                            value={password}
-                            onChangeText={setPassword}
-                        />
-                        <TouchableOpacity
-                            onPress={() => setShowPassword(!showPassword)}
-                            className="absolute inset-y-0 right-0 pr-3 justify-center z-10"
-                        >
-                            {showPassword ? (
-                                <EyeOff size={20} color="#64748b" />
-                            ) : (
-                                <Eye size={20} color="#64748b" />
-                            )}
-                        </TouchableOpacity>
+                    </View>
+
+                    {/* Register Button */}
+                    <Button size="lg" onPress={handleRegister} className="w-full mb-4">
+                        <Text className="text-white font-bold">Get Started</Text>
+                        <ArrowRight size={20} color="#ffffff" />
+                    </Button>
+
+                    {/* Divider */}
+                    <View className="flex-row items-center my-4">
+                        <View className="flex-1 h-px bg-border" />
+                        <Text className="px-4 text-muted-foreground text-sm">Or</Text>
+                        <View className="flex-1 h-px bg-border" />
+                    </View>
+
+                    {/* Login Link */}
+                    <View className="flex-row justify-center">
+                        <Text className="text-sm text-muted-foreground">Already have an account? </Text>
+                        <Link href="/login" asChild>
+                            <TouchableOpacity>
+                                <Text className="text-sm font-semibold text-primary">Log in</Text>
+                            </TouchableOpacity>
+                        </Link>
                     </View>
                 </View>
-
-                {/* Submit Button */}
-                <Button size="lg" onPress={handleRegister} className="w-full">
-                    Get Started
-                    <ArrowRight size={20} color="#ffffff" />
-                </Button>
             </View>
 
-            {/* Divider */}
-            <View className="relative my-6">
-                <View className="absolute inset-0 justify-center">
-                    <View className="w-full border-t border-border" />
-                </View>
-                <View className="relative flex-row justify-center">
-                    <Text className="px-4 bg-background text-muted-foreground text-sm">Or</Text>
-                </View>
-            </View>
-
-            {/* Log In Link */}
-            <View className="flex-row justify-center">
-                <Text className="text-sm text-muted-foreground">
-                    Already have an account?{" "}
+            {/* Terms */}
+            <View className="flex-row items-center justify-center gap-2 mt-8 mb-8 px-6">
+                <Text className="text-xs text-muted-foreground text-center">
+                    By signing up, you agree to our Terms of Service and Privacy Policy
                 </Text>
-                <Link href="/login" asChild>
-                    <TouchableOpacity>
-                        <Text className="text-sm font-semibold text-primary">Log in</Text>
-                    </TouchableOpacity>
-                </Link>
-            </View>
-
-            {/* Security Badge */}
-            <View className="mt-8 flex-row items-center justify-center gap-2">
-                <Shield size={16} color="#64748b" />
-                <Text className="text-xs text-muted-foreground">Terms and Conditions apply</Text>
             </View>
         </ScrollView>
-    )
+    );
 }

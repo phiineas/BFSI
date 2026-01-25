@@ -55,7 +55,7 @@ export function ProductsSection() {
                     <Card key={product.title} className="bg-card">
                         <CardHeader className="flex-row items-start gap-4 space-y-0">
                             <View className="h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                                <product.icon size={24} color="#2563eb" />
+                                <product.icon size={24} color="hsl(0, 84%, 51%)" />
                             </View>
                             <View className="flex-1">
                                 <CardTitle className="text-lg">{product.title}</CardTitle>
@@ -78,7 +78,7 @@ export function ProductsSection() {
                                 onPress={() => router.push(product.href as any)}
                             >
                                 <Text className="text-primary font-medium">Learn More</Text>
-                                <ArrowRight size={16} color="#2563eb" />
+                                <ArrowRight size={16} color="hsl(0, 84%, 51%)" />
                             </Button>
                         </CardContent>
                     </Card>

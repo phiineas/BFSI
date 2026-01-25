@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import React, { useState } from 'react';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { products } from '../../constants/products';
@@ -7,6 +7,13 @@ import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Checkbox } from '../../components/ui/checkbox';
 import { ArrowLeft, User, Briefcase, FileText, CreditCard, CheckCircle2, ArrowRight, Shield, Lock, Check } from 'lucide-react-native';
+
+// Credit card products for apply flow
+const creditCards: { [key: string]: { title: string } } = {
+    sapphire: { title: 'Sapphire Platinum Card' },
+    rubyx: { title: 'Rubyx Gold Card' },
+    coral: { title: 'Coral Card' },
+};
 
 const steps = [
     { id: 1, title: "Personal", icon: User },
@@ -18,9 +25,13 @@ const steps = [
 export default function ApplyScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
-    const product = products.find(p => p.id === id);
+    const productId = id as string;
+    const product = products.find(p => p.id === productId) || creditCards[productId];
+    const productTitle = product?.title || `Product ${productId}`;
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [applicationId] = useState(`SB-${Math.floor(Math.random() * 900000 + 100000)}`);
 
     const [formData, setFormData] = useState({
         firstName: "",
@@ -60,19 +71,45 @@ export default function ApplyScreen() {
         setIsSubmitting(true);
         setTimeout(() => {
             setIsSubmitting(false);
-            Alert.alert("Success", "Your application has been submitted successfully!", [
-                { text: "OK", onPress: () => router.push('/(tabs)') }
-            ]);
+            setShowSuccess(true);
         }, 2000);
+    };
+
+    const closeSuccess = () => {
+        setShowSuccess(false);
+        router.replace('/(tabs)');
     };
 
     const StepIcon = steps[currentStep - 1].icon;
 
-    if (!product) return null;
-
     return (
         <View className="flex-1 bg-background">
             <Stack.Screen options={{ headerShown: false }} />
+
+            {/* Success Modal */}
+            <Modal visible={showSuccess} transparent animationType="fade">
+                <View className="flex-1 bg-black/50 items-center justify-center p-6">
+                    <View className="bg-card rounded-3xl p-8 w-full max-w-sm items-center">
+                        <View className="h-20 w-20 rounded-full bg-green-100 items-center justify-center mb-6">
+                            <CheckCircle2 size={48} color="#22c55e" />
+                        </View>
+                        <Text className="text-2xl font-bold text-foreground mb-2 text-center">Application Submitted!</Text>
+                        <Text className="text-muted-foreground text-center mb-4">
+                            Your {productTitle} application has been received successfully.
+                        </Text>
+                        <View className="bg-muted/50 rounded-xl p-4 w-full mb-4">
+                            <Text className="text-muted-foreground text-sm text-center">Application ID</Text>
+                            <Text className="text-2xl font-bold text-foreground text-center">{applicationId}</Text>
+                        </View>
+                        <Text className="text-xs text-muted-foreground text-center mb-6">
+                            We'll contact you within 24-48 hours with an update.
+                        </Text>
+                        <Button size="lg" className="w-full" onPress={closeSuccess}>
+                            <Text className="text-white font-bold">Back to Home</Text>
+                        </Button>
+                    </View>
+                </View>
+            </Modal>
 
             {/* Header */}
             <View className="p-4 flex-row items-center border-b border-border bg-background sticky top-0 z-10">
@@ -81,7 +118,7 @@ export default function ApplyScreen() {
                 </TouchableOpacity>
                 <View className="ml-2">
                     <Text className="text-sm text-muted-foreground">Applying for</Text>
-                    <Text className="text-base font-semibold text-foreground">{product.title}</Text>
+                    <Text className="text-base font-semibold text-foreground">{productTitle}</Text>
                 </View>
             </View>
 

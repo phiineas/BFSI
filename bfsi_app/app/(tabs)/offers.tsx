@@ -118,7 +118,7 @@ export default function OffersScreen() {
                                 <Card key={i}>
                                     <CardHeader className="flex-row gap-4 items-center space-y-0">
                                         <View className="bg-primary/10 h-10 w-10 items-center justify-center rounded-lg">
-                                            <Icon size={20} color="#2563eb" />
+                                            <Icon size={20} color="hsl(0, 84%, 51%)" />
                                         </View>
                                         <View className="flex-1">
                                             <CardTitle className="text-base">{offer.title}</CardTitle>

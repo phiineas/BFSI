@@ -9,9 +9,9 @@ export default function ProfileScreen() {
     const router = useRouter();
 
     const menuItems = [
-        { label: "Account Settings", icon: Settings },
-        { label: "Privacy & Security", icon: Shield },
-        { label: "Help & Support", icon: HelpCircle },
+        { label: "Account Settings", icon: Settings, route: '/account-settings' },
+        { label: "Privacy & Security", icon: Shield, route: '/privacy-security' },
+        { label: "Help & Support", icon: HelpCircle, route: '/help-support' },
     ];
 
     const handleLogout = () => {
@@ -23,7 +23,7 @@ export default function ProfileScreen() {
             <View className="bg-primary pt-16 pb-12 px-6 rounded-b-[30px] shadow-lg">
                 <View className="flex-row items-center gap-4">
                     <View className="h-16 w-16 rounded-full bg-white items-center justify-center border-2 border-white/50">
-                        <User size={32} color="#2563eb" />
+                        <User size={32} color="hsl(0, 84%, 51%)" />
                     </View>
                     <View>
                         <Text className="text-2xl font-bold text-white">John Doe</Text>
@@ -69,7 +69,11 @@ export default function ProfileScreen() {
                     {menuItems.map((item, i) => {
                         const Icon = item.icon;
                         return (
-                            <TouchableOpacity key={i} className="flex-row items-center p-4 bg-card rounded-xl border border-border">
+                            <TouchableOpacity
+                                key={i}
+                                className="flex-row items-center p-4 bg-card rounded-xl border border-border"
+                                onPress={() => router.push(item.route as any)}
+                            >
                                 <View className="bg-muted p-2 rounded-full mr-4">
                                     <Icon size={20} color="#0f172a" />
                                 </View>
