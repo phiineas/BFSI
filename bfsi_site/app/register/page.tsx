@@ -207,7 +207,7 @@ export default function RegisterPage() {
 
     return (
         <div className="flex min-h-screen">
-            <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden p-12">
+            <div className="hidden lg:flex lg:w-1/2 relative bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden p-12">
                 <Link href="/" className="flex items-center gap-3 mb-16">
                     <div className="flex h-12 w-12 items-center justify-center rounded bg-primary">
                         <Shield className="h-7 w-7 text-white" />
@@ -242,24 +242,28 @@ export default function RegisterPage() {
                             { name: "fullName", label: "Full Name", icon: User },
                             { name: "email", label: "Email", type: "email", icon: Mail },
                             { name: "phone", label: "Phone", type: "tel", icon: Phone },
-                        ].map(({ name, label, type, icon: Icon }) => (
-                            <div key={name} className="space-y-2">
-                                <label className="text-sm font-medium">{label}</label>
-                                <div className="relative">
-                                    <Icon className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                                    <input
-                                        name={name}
-                                        type={type || "text"}
-                                        required
-                                        disabled={isSubmitting}
-                                        value={formData[name as keyof typeof formData]}
-                                        onChange={handleFormChange}
-                                        className="w-full pl-10 pr-3 py-3 border border-input rounded-lg focus:ring-2 focus:ring-primary outline-none disabled:opacity-50"
-                                        placeholder={label}
-                                    />
+                        ].map(({ name, label, type, icon: Icon }) => {
+                            // Only render input for string fields, skip boolean fields
+                            if (typeof formData[name as keyof typeof formData] === "boolean") return null;
+                            return (
+                                <div key={name} className="space-y-2">
+                                    <label className="text-sm font-medium">{label}</label>
+                                    <div className="relative">
+                                        <Icon className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                                        <input
+                                            name={name}
+                                            type={type || "text"}
+                                            required
+                                            disabled={isSubmitting}
+                                            value={formData[name as keyof typeof formData] as string}
+                                            onChange={handleFormChange}
+                                            className="w-full pl-10 pr-3 py-3 border border-input rounded-lg focus:ring-2 focus:ring-primary outline-none disabled:opacity-50"
+                                            placeholder={label}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Password</label>
                             <div className="relative">
@@ -335,5 +339,4 @@ export default function RegisterPage() {
             </div>
         </div>
     )
-}
 }
