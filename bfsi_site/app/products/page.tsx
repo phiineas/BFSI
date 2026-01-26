@@ -2,26 +2,33 @@
 
 import React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  ArrowRight, 
-  Wallet, 
-  Home, 
-  Car, 
-  Shield, 
+import {
+  ArrowRight,
+  Wallet,
+  Home,
+  Car,
+  Shield,
   TrendingUp,
   Clock,
   CheckCircle2,
   Star
 } from "lucide-react"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
+import {
+  trackViewProductList,
+  trackViewProductDetail,
+  trackStartApplication,
+  getUserSegment
+} from "@/lib/analytics-events"
 
 const categories = [
   { id: "all", name: "All Products" },
@@ -149,9 +156,24 @@ export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState("all")
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation()
 
-  const filteredProducts = activeCategory === "all" 
-    ? products 
+  const filteredProducts = activeCategory === "all"
+    ? products
     : products.filter(p => p.category === activeCategory)
+
+  // Track view_product_list on page load and category changes
+  useEffect(() => {
+    trackViewProductList({
+      product_category: activeCategory as any,
+      product_count: filteredProducts.length,
+      filter_applied: activeCategory,
+      user_segment: getUserSegment(),
+    })
+  }, [activeCategory, filteredProducts.length])
+
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category)
+    // Tracking is handled by useEffect above
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -159,11 +181,10 @@ export default function ProductsPage() {
       <main className="flex-1 pt-16">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-primary/10 via-primary/5 to-background py-16 sm:py-24">
-          <div 
+          <div
             ref={headerRef as React.RefObject<HTMLDivElement>}
-            className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 transition-all duration-700 ${
-              headerVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-            }`}
+            className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 transition-all duration-700 ${headerVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              }`}
           >
             <div className="mx-auto max-w-3xl text-center">
               <Badge variant="secondary" className="mb-4">
@@ -184,7 +205,7 @@ export default function ProductsPage() {
         <section className="py-12 sm:py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* Category Tabs */}
-            <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
+            <Tabs value={activeCategory} onValueChange={handleCategoryChange} className="w-full">
               <div className="flex justify-center mb-12">
                 <TabsList className="grid w-full max-w-lg grid-cols-4">
                   {categories.map((category) => (
@@ -231,13 +252,37 @@ export default function ProductsPage() {
 
 function ProductCard({ product, index }: { product: typeof products[0], index: number }) {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 })
+  const router = useRouter()
+
+  const handleLearnMore = () => {
+    // Track view_product_detail
+    trackViewProductDetail({
+      product_id: product.id,
+      product_name: product.title,
+      product_category: product.category as any,
+      product_interest_rate: product.highlight,
+      product_rating: product.rating,
+      is_popular: product.popular,
+    })
+    router.push(product.href)
+  }
+
+  const handleApplyNow = () => {
+    // Track start_application (CONVERSION)
+    trackStartApplication({
+      product_id: product.id,
+      product_name: product.title,
+      product_category: product.category as any,
+      application_source: 'product_card',
+    })
+    router.push(`/apply/${product.id}`)
+  }
 
   return (
-    <Card 
+    <Card
       ref={ref as React.RefObject<HTMLDivElement>}
-      className={`group relative overflow-hidden transition-all duration-500 hover:shadow-lg hover:-translate-y-1 ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-      }`}
+      className={`group relative overflow-hidden transition-all duration-500 hover:shadow-lg hover:-translate-y-1 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+        }`}
       style={{ transitionDelay: `${index * 75}ms` }}
     >
       {product.popular && (
@@ -280,14 +325,19 @@ function ProductCard({ product, index }: { product: typeof products[0], index: n
 
         {/* CTA */}
         <div className="mt-6 flex gap-3">
-          <Button variant="outline" asChild className="flex-1 bg-transparent">
-            <Link href={product.href}>Learn More</Link>
+          <Button
+            variant="outline"
+            onClick={handleLearnMore}
+            className="flex-1 bg-transparent"
+          >
+            Learn More
           </Button>
-          <Button asChild className="flex-1">
-            <Link href={`/apply/${product.id}`}>
-              Apply Now
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
+          <Button
+            onClick={handleApplyNow}
+            className="flex-1"
+          >
+            Apply Now
+            <ArrowRight className="ml-1 h-4 w-4" />
           </Button>
         </div>
       </CardContent>
