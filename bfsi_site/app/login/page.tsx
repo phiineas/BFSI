@@ -8,6 +8,7 @@ import { Shield, Eye, EyeOff, ArrowRight, Lock, Mail, Loader2 } from "lucide-rea
 import { useAuth } from "@/lib/auth-context"
 import AdCarousel from "@/components/ad-carousel"
 import { toast } from "sonner"
+import { trackUserLogin } from "@/lib/analytics-events"
 
 export default function LoginPage() {
     const router = useRouter()
@@ -38,8 +39,17 @@ export default function LoginPage() {
             }
 
             await login(email, password)
+
+            // Track user_login event (CONVERSION)
+            trackUserLogin({
+                login_method: 'email_password',
+                user_type: 'existing_customer',
+                login_source: 'direct',
+                session_start_time: new Date().toISOString(),
+            })
+
             toast.success("Login successful! Redirecting...")
-            router.push("/products")
+            router.push("/dashboard")
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Login failed. Please try again."
             setError(errorMessage)
@@ -59,8 +69,17 @@ export default function LoginPage() {
                 name: "Google User",
             }
             await loginWithGoogle(mockGoogleUser)
+
+            // Track user_login event (CONVERSION)
+            trackUserLogin({
+                login_method: 'social',
+                user_type: 'existing_customer',
+                login_source: 'direct',
+                session_start_time: new Date().toISOString(),
+            })
+
             toast.success("Google login successful! Redirecting...")
-            router.push("/products")
+            router.push("/dashboard")
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Google login failed"
             setError(errorMessage)
