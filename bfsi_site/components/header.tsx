@@ -2,9 +2,11 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Shield, Search, Globe } from "lucide-react"
+import { Menu, Shield, Search, Globe, LogOut, User } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
 
 const topNavigation = [
   { name: "Personal", href: "/" },
@@ -47,12 +49,19 @@ const mainNavigation = [
 ]
 
 export function Header({ forceScrolled = false }: { forceScrolled?: boolean }) {
+  const router = useRouter()
+  const { user, logout, isLoading } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleLogout = () => {
+    logout()
+    router.push('/')
+  }
 
   return (
     <header className="fixed top-0 z-50 w-full bg-black">
@@ -81,15 +90,40 @@ export function Header({ forceScrolled = false }: { forceScrolled?: boolean }) {
             <button className="hidden text-xs text-white/80 hover:text-white md:block">
               <Search className="h-4 w-4" />
             </button>
-            <Link href="/register" className="hidden text-xs text-white/80 hover:text-white md:block">
-              Register
-            </Link>
-            <Link
-              href="/login"
-              className="rounded bg-primary px-3 py-1 text-xs font-semibold text-white hover:bg-primary/90"
-            >
-              Log In
-            </Link>
+
+            {!isLoading && (
+              <>
+                {user ? (
+                  // Logged in state
+                  <>
+                    <Link href="/dashboard" className="hidden items-center gap-1.5 text-xs text-white/80 hover:text-white md:flex">
+                      <User className="h-3.5 w-3.5" />
+                      {user.name}
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="hidden items-center gap-1.5 rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 md:flex"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  // Logged out state
+                  <>
+                    <Link href="/register" className="hidden text-xs text-white/80 hover:text-white md:block">
+                      Register
+                    </Link>
+                    <Link
+                      href="/login"
+                      className="rounded bg-primary px-3 py-1 text-xs font-semibold text-white hover:bg-primary/90"
+                    >
+                      Log In
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -176,12 +210,33 @@ export function Header({ forceScrolled = false }: { forceScrolled?: boolean }) {
 
                   {/* Mobile Actions */}
                   <div className="flex flex-col gap-2 border-t border-white/10 pt-4">
-                    <Button variant="outline" asChild className="w-full border-white/30 bg-transparent text-white hover:bg-white/10">
-                      <Link href="/register">Register</Link>
-                    </Button>
-                    <Button asChild className="w-full">
-                      <Link href="/login">Log In</Link>
-                    </Button>
+                    {user ? (
+                      // Logged in state
+                      <>
+                        <Link href="/dashboard" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-white/80 hover:bg-white/10 hover:text-white">
+                          <User className="h-4 w-4" />
+                          {user.name}
+                        </Link>
+                        <Button
+                          onClick={handleLogout}
+                          variant="outline"
+                          className="w-full border-red-600 bg-transparent text-red-500 hover:bg-red-600 hover:text-white"
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      // Logged out state
+                      <>
+                        <Button variant="outline" asChild className="w-full border-white/30 bg-transparent text-white hover:bg-white/10">
+                          <Link href="/register">Register</Link>
+                        </Button>
+                        <Button asChild className="w-full">
+                          <Link href="/login">Log In</Link>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </SheetContent>

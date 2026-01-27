@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Shield, Eye, EyeOff, ArrowRight, Lock, Mail, User, Phone, Loader2, CheckCircle2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
+import { trackUserRegistration, trackOtpInitiated, trackOtpVerified } from "@/lib/analytics-events"
 
 type RegistrationStep = "form" | "otp" | "success"
 
@@ -34,7 +35,7 @@ export default function RegisterPage() {
     })
 
     useEffect(() => {
-        if (user) router.push("/products")
+        if (user) router.push("/dashboard")
     }, [user, router])
 
     useEffect(() => {
@@ -92,6 +93,15 @@ export default function RegisterPage() {
                 throw new Error("You must agree to the Terms")
             }
             await registerWithEmail(formData.email, formData.password, formData.fullName, formData.phone)
+
+            // Track otp_initiated event (CONVERSION)
+            trackOtpInitiated({
+                verification_type: 'email',
+                verification_purpose: 'registration',
+                product_id: 'registration',
+                user_type: 'new_user',
+            })
+
             setStep("otp")
             setOtpTimer(30)
             setCanResendOTP(false)
@@ -125,9 +135,27 @@ export default function RegisterPage() {
             const otpCode = otp.join("")
             if (otpCode.length !== 6) throw new Error("Please enter all 6 digits")
             await verifyOTP(formData.email, otpCode)
+
+            // Track otp_verified event (CONVERSION)
+            trackOtpVerified({
+                verification_type: 'email',
+                verification_purpose: 'registration',
+                product_id: 'registration',
+                verification_attempts: 1,
+                time_to_verify: 30 - otpTimer,
+            })
+
+            // Track user_registration event
+            trackUserRegistration({
+                registration_method: 'email',
+                user_type: 'new_customer',
+                registration_source: 'direct',
+                account_type: 'individual',
+            })
+
             setStep("success")
             toast.success("Account created!")
-            setTimeout(() => router.push("/products"), 2000)
+            setTimeout(() => router.push("/dashboard"), 2000)
         } catch (err) {
             const msg = err instanceof Error ? err.message : "Verification failed"
             setOtpError(msg)
@@ -155,7 +183,7 @@ export default function RegisterPage() {
                 <div className="w-full max-w-md space-y-8 text-center">
                     <CheckCircle2 className="h-20 w-20 text-green-500 animate-bounce mx-auto" />
                     <h2 className="text-3xl font-bold text-foreground">Account Created!</h2>
-                    <p className="text-muted-foreground">Redirecting to products...</p>
+                    <p className="text-muted-foreground">Redirecting to dashboard...</p>
                 </div>
             </div>
         )
@@ -301,9 +329,8 @@ export default function RegisterPage() {
                                     disabled={isSubmitting}
                                     value={formData.confirmPassword}
                                     onChange={handleFormChange}
-                                    className={`w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 outline-none disabled:opacity-50 ${
-                                        formData.confirmPassword ? (passwordsMatch ? "border-green-500" : "border-red-500") : "border-input"
-                                    }`}
+                                    className={`w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 outline-none disabled:opacity-50 ${formData.confirmPassword ? (passwordsMatch ? "border-green-500" : "border-red-500") : "border-input"
+                                        }`}
                                     placeholder="••••••••"
                                 />
                                 <button type="button" disabled={isSubmitting} onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3">

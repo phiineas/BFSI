@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Progress } from "@/components/ui/progress"
-import { 
+import {
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
@@ -24,6 +24,7 @@ import {
   CreditCard,
   Lock
 } from "lucide-react"
+import { trackFormStepCompleted, trackApplicationSubmitted, generateApplicationId } from "@/lib/analytics-events"
 
 const productNames: Record<string, string> = {
   "savings-account": "Premium Savings Account",
@@ -48,7 +49,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
+
   const [formData, setFormData] = useState({
     // Personal Details
     firstName: "",
@@ -61,14 +62,14 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
     city: "",
     state: "",
     zipCode: "",
-    
+
     // Employment Info
     employmentType: "",
     companyName: "",
     designation: "",
     monthlyIncome: "",
     workExperience: "",
-    
+
     // Documents
     idType: "",
     idNumber: "",
@@ -84,6 +85,16 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
 
   const handleNext = () => {
     if (currentStep < steps.length) {
+      // Track form_step_completed event (CONVERSION)
+      trackFormStepCompleted({
+        product_id: product,
+        product_category: product.includes('loan') ? 'loans' : product.includes('insurance') ? 'insurance' : 'accounts',
+        form_step_number: currentStep,
+        form_step_name: steps[currentStep - 1].title.toLowerCase().replace(/ /g, '_') as any,
+        total_steps: steps.length,
+        completion_percentage: (currentStep / steps.length) * 100,
+      })
+
       setCurrentStep(currentStep + 1)
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
@@ -98,8 +109,32 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
+
+    // Track final form step completed (CONVERSION)
+    trackFormStepCompleted({
+      product_id: product,
+      product_category: product.includes('loan') ? 'loans' : product.includes('insurance') ? 'insurance' : 'accounts',
+      form_step_number: currentStep,
+      form_step_name: 'review_and_submit',
+      total_steps: steps.length,
+      completion_percentage: 100,
+    })
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // Track application_submitted event (CONVERSION)
+    const applicationId = generateApplicationId()
+    trackApplicationSubmitted({
+      product_id: product,
+      product_name: productName,
+      product_category: product.includes('loan') ? 'loans' : product.includes('insurance') ? 'insurance' : 'accounts',
+      application_id: applicationId,
+      application_amount: parseFloat(formData.monthlyIncome?.split('-')[0] || '0'),
+      application_tenure: 12,
+      time_to_complete: 300, // 5 minutes average
+    })
+
     router.push(`/apply/${product}/verify`)
   }
 
@@ -110,7 +145,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
         {/* Header */}
         <div className="border-b border-border bg-muted/30">
           <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
-            <Link 
+            <Link
               href={`/products/${product}`}
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
             >
@@ -138,27 +173,25 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
               </span>
             </div>
             <Progress value={progress} className="h-2" />
-            
+
             {/* Step Indicators */}
             <div className="mt-6 grid grid-cols-4 gap-4">
               {steps.map((step) => (
-                <div 
+                <div
                   key={step.id}
-                  className={`flex flex-col items-center gap-2 ${
-                    step.id === currentStep 
-                      ? "text-primary" 
-                      : step.id < currentStep 
-                        ? "text-primary" 
-                        : "text-muted-foreground"
-                  }`}
+                  className={`flex flex-col items-center gap-2 ${step.id === currentStep
+                    ? "text-primary"
+                    : step.id < currentStep
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                    }`}
                 >
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors ${
-                    step.id === currentStep 
-                      ? "border-primary bg-primary text-primary-foreground" 
-                      : step.id < currentStep 
-                        ? "border-primary bg-primary text-primary-foreground" 
-                        : "border-muted-foreground/30 bg-background"
-                  }`}>
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors ${step.id === currentStep
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : step.id < currentStep
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-muted-foreground/30 bg-background"
+                    }`}>
                     {step.id < currentStep ? (
                       <CheckCircle2 className="h-5 w-5" />
                     ) : (
@@ -198,7 +231,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First Name</Label>
-                        <Input 
+                        <Input
                           id="firstName"
                           placeholder="John"
                           value={formData.firstName}
@@ -207,7 +240,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="lastName">Last Name</Label>
-                        <Input 
+                        <Input
                           id="lastName"
                           placeholder="Doe"
                           value={formData.lastName}
@@ -219,7 +252,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="email">Email Address</Label>
-                        <Input 
+                        <Input
                           id="email"
                           type="email"
                           placeholder="john@example.com"
@@ -229,7 +262,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input 
+                        <Input
                           id="phone"
                           type="tel"
                           placeholder="+1 (555) 000-0000"
@@ -242,7 +275,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="dob">Date of Birth</Label>
-                        <Input 
+                        <Input
                           id="dob"
                           type="date"
                           value={formData.dob}
@@ -251,7 +284,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                       </div>
                       <div className="space-y-2">
                         <Label>Gender</Label>
-                        <RadioGroup 
+                        <RadioGroup
                           value={formData.gender}
                           onValueChange={(value) => updateFormData("gender", value)}
                           className="flex gap-6 pt-2"
@@ -274,7 +307,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
 
                     <div className="space-y-2">
                       <Label htmlFor="address">Street Address</Label>
-                      <Input 
+                      <Input
                         id="address"
                         placeholder="123 Main Street, Apt 4B"
                         value={formData.address}
@@ -285,7 +318,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                     <div className="grid gap-6 sm:grid-cols-3">
                       <div className="space-y-2">
                         <Label htmlFor="city">City</Label>
-                        <Input 
+                        <Input
                           id="city"
                           placeholder="New York"
                           value={formData.city}
@@ -312,7 +345,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="zipCode">ZIP Code</Label>
-                        <Input 
+                        <Input
                           id="zipCode"
                           placeholder="10001"
                           value={formData.zipCode}
@@ -328,40 +361,37 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <Label>Employment Type</Label>
-                      <RadioGroup 
+                      <RadioGroup
                         value={formData.employmentType}
                         onValueChange={(value) => updateFormData("employmentType", value)}
                         className="grid gap-4 sm:grid-cols-3 pt-2"
                       >
-                        <Label 
-                          htmlFor="salaried" 
-                          className={`flex items-center justify-center rounded-lg border-2 p-4 cursor-pointer transition-colors ${
-                            formData.employmentType === "salaried" 
-                              ? "border-primary bg-primary/5" 
-                              : "border-border hover:border-primary/50"
-                          }`}
+                        <Label
+                          htmlFor="salaried"
+                          className={`flex items-center justify-center rounded-lg border-2 p-4 cursor-pointer transition-colors ${formData.employmentType === "salaried"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                            }`}
                         >
                           <RadioGroupItem value="salaried" id="salaried" className="sr-only" />
                           <span>Salaried</span>
                         </Label>
-                        <Label 
-                          htmlFor="self-employed" 
-                          className={`flex items-center justify-center rounded-lg border-2 p-4 cursor-pointer transition-colors ${
-                            formData.employmentType === "self-employed" 
-                              ? "border-primary bg-primary/5" 
-                              : "border-border hover:border-primary/50"
-                          }`}
+                        <Label
+                          htmlFor="self-employed"
+                          className={`flex items-center justify-center rounded-lg border-2 p-4 cursor-pointer transition-colors ${formData.employmentType === "self-employed"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                            }`}
                         >
                           <RadioGroupItem value="self-employed" id="self-employed" className="sr-only" />
                           <span>Self Employed</span>
                         </Label>
-                        <Label 
-                          htmlFor="business" 
-                          className={`flex items-center justify-center rounded-lg border-2 p-4 cursor-pointer transition-colors ${
-                            formData.employmentType === "business" 
-                              ? "border-primary bg-primary/5" 
-                              : "border-border hover:border-primary/50"
-                          }`}
+                        <Label
+                          htmlFor="business"
+                          className={`flex items-center justify-center rounded-lg border-2 p-4 cursor-pointer transition-colors ${formData.employmentType === "business"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                            }`}
                         >
                           <RadioGroupItem value="business" id="business" className="sr-only" />
                           <span>Business Owner</span>
@@ -372,7 +402,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="companyName">Company / Business Name</Label>
-                        <Input 
+                        <Input
                           id="companyName"
                           placeholder="Acme Corporation"
                           value={formData.companyName}
@@ -381,7 +411,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="designation">Designation / Role</Label>
-                        <Input 
+                        <Input
                           id="designation"
                           placeholder="Software Engineer"
                           value={formData.designation}
@@ -445,7 +475,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
 
                     <div className="space-y-2">
                       <Label htmlFor="idNumber">Document Number</Label>
-                      <Input 
+                      <Input
                         id="idNumber"
                         placeholder="Enter document number"
                         value={formData.idNumber}
@@ -547,7 +577,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                     {/* Consent */}
                     <div className="space-y-4">
                       <div className="flex items-start gap-3">
-                        <Checkbox 
+                        <Checkbox
                           id="consent"
                           checked={formData.hasConsented}
                           onCheckedChange={(checked) => updateFormData("hasConsented", checked as boolean)}
@@ -564,8 +594,8 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
 
                 {/* Navigation Buttons */}
                 <div className="flex items-center justify-between pt-6 border-t border-border">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handlePrevious}
                     disabled={currentStep === 1}
                     className="bg-transparent"
@@ -580,7 +610,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ product:
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button 
+                    <Button
                       onClick={handleSubmit}
                       disabled={!formData.hasConsented || isSubmitting}
                     >
