@@ -239,9 +239,24 @@ def generate_user_journey(client_id, platform="WEB", day_offset=0):
 # MAIN EXECUTION
 # ============================================================================
 
+import sys
+
 def main():
     """Main function to send dummy data for 5 days"""
     
+    # Parse resume parameters
+    resume_day = 0
+    resume_user = 0
+    
+    if len(sys.argv) > 1:
+        try:
+            resume_day = int(sys.argv[1]) - 1
+            if len(sys.argv) > 2:
+                resume_user = int(sys.argv[2])
+        except ValueError:
+            print("Usage: python3 measurement_protocol.py [resume_day_1_to_5] [resume_user_index]")
+            return
+
     print("=" * 70)
     print("GA4 Measurement Protocol - Dummy Data Generator")
     print("=" * 70)
@@ -249,50 +264,76 @@ def main():
     print(f"Total Users: {TOTAL_USERS:,}")
     print(f"Days to Simulate: {DAYS_TO_SIMULATE}")
     print(f"Events per User: {EVENTS_PER_USER_MIN}-{EVENTS_PER_USER_MAX}")
+    if resume_day > 0 or resume_user > 0:
+        print(f"Resuming from Day {resume_day + 1}, User Index: {resume_user}")
     print("=" * 70)
     
     # Calculate user split
-    web_users = int(TOTAL_USERS * WEB_USERS_PERCENTAGE)
-    android_users = TOTAL_USERS - web_users
+    web_users_total = int(TOTAL_USERS * WEB_USERS_PERCENTAGE)
+    android_users_total = TOTAL_USERS - web_users_total
     
-    print(f"\nUser Split:")
-    print(f"  Web Users: {web_users:,}")
-    print(f"  Android Users: {android_users:,}")
+    users_per_day = TOTAL_USERS // DAYS_TO_SIMULATE
+    web_users_per_day = int(users_per_day * WEB_USERS_PERCENTAGE)
+    android_users_per_day = users_per_day - web_users_per_day
+
+    print(f"\nUser Split per day:")
+    print(f"  Web Users: {web_users_per_day:,}")
+    print(f"  Android Users: {android_users_per_day:,}")
     print()
     
     # Simulate each day
     total_events_sent = 0
     
     for day in range(DAYS_TO_SIMULATE):
+        if day < resume_day:
+            print(f"Skipping Day {day + 1} (already completed)")
+            continue
+            
         day_date = START_DATE + timedelta(days=day)
         print(f"\n{'='*70}")
         print(f"Day {day + 1}/{DAYS_TO_SIMULATE} - {day_date.strftime('%Y-%m-%d')}")
         print(f"{'='*70}")
         
         day_events = 0
-        users_per_day = TOTAL_USERS // DAYS_TO_SIMULATE
         
         # Web users for this day
-        web_users_today = int(users_per_day * WEB_USERS_PERCENTAGE)
-        print(f"\nSending Web events ({web_users_today:,} users)...")
-        for i in range(web_users_today):
+        print(f"\nSending Web events ({web_users_per_day:,} users)...")
+        for i in range(web_users_per_day):
+            if day == resume_day and i < resume_user:
+                continue
+                
             client_id = generate_client_id()
             events_sent = generate_user_journey(client_id, "WEB", day)
             day_events += events_sent
             
             if (i + 1) % 100 == 0:
-                print(f"  Progress: {i+1:,}/{web_users_today:,} users")
+                print(f"  Progress: {i+1:,}/{web_users_per_day:,} users (Current index: {i+1})")
         
-        # Android users for this day
-        android_users_today = users_per_day - web_users_today
-        print(f"\nSending Android events ({android_users_today:,} users)...")
-        for i in range(android_users_today):
+        # Android users for this day (logic simplified for sequential indexing within a day)
+        # If resume_user was actually meant for the whole day, we might need a different offset.
+        # But let's assume the user just wants to skip the first 5000 users which is exactly 1 day.
+        
+        print(f"\nSending Android events ({android_users_per_day:,} users)...")
+        # Offset i logic to not double skip if web was partially done
+        # For simplicity, if resume_user > web_users_per_day, we handle android.
+        
+        for i in range(android_users_per_day):
+            # If we resume in the middle of a day, we need to decide if resume_user applies to total day or just web.
+            # Let's assume resume_user is the starting web user for now.
+            # If the user said 5000 users done, and web_users_per_day is 3000, they are 2000 into android.
+            
+            # Revised logic for day resumption:
+            current_user_index = web_users_per_day + i
+            if day == resume_day and current_user_index < resume_user:
+                continue
+
             client_id = generate_client_id()
             events_sent = generate_user_journey(client_id, "ANDROID", day)
             day_events += events_sent
             
-            if (i + 1) % 100 == 0:
-                print(f"  Progress: {i+1:,}/{android_users_today:,} users")
+            if (current_user_index + 1) % 100 == 0:
+                print(f"  Progress: {current_user_index + 1:,}/{users_per_day:,} users (Current index: {current_user_index + 1})")
+
         
         total_events_sent += day_events
         print(f"\nDay {day + 1} Complete: {day_events:,} events sent")

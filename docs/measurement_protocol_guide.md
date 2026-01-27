@@ -41,6 +41,18 @@ START_DATE = datetime.now() - timedelta(days=4)  # Backdate 4 days
 
 ---
 
+## 📋 Resuming after Interruption
+
+If the script stops or is interrupted, you can resume it by specifying the starting day and (optionally) the user index:
+
+```bash
+# To resume from Day 2:
+python3 scripts/measurement_protocol.py 2
+
+# To resume from Day 2, starting at specific user index:
+python3 scripts/measurement_protocol.py 2 1500
+```
+
 ## Event Schema Implementation
 
 ### Events Sent (10 per platform)
