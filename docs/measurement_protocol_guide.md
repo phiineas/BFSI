@@ -26,8 +26,7 @@ START_DATE = datetime.now() - timedelta(days=4)  # Backdate 4 days
 
 **User Distribution:**
 - Total Users: 25,000
-- Web Users: 15,000 (60%)
-- Android Users: 10,000 (40%)
+- Platform: Web (100%)
 
 **Event Distribution:**
 - Events per User: 5-30 (random)

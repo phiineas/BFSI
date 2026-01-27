@@ -29,8 +29,8 @@ GA4_API_SECRET = "rps2B-hORcWrikj35832JQ"  # Get from GA4 Admin > Data Streams >
 MP_ENDPOINT = f"https://www.google-analytics.com/mp/collect?measurement_id={GA4_MEASUREMENT_ID}&api_secret={GA4_API_SECRET}"
 
 # User Configuration
-TOTAL_USERS = 25000  # Max users (Web + Android combined)
-WEB_USERS_PERCENTAGE = 0.6  # 60% web, 40% Android
+TOTAL_USERS = 25000  # Max users
+WEB_USERS_PERCENTAGE = 1.0  # 100% web
 EVENTS_PER_USER_MIN = 5
 EVENTS_PER_USER_MAX = 30
 
@@ -269,16 +269,10 @@ def main():
     print("=" * 70)
     
     # Calculate user split
-    web_users_total = int(TOTAL_USERS * WEB_USERS_PERCENTAGE)
-    android_users_total = TOTAL_USERS - web_users_total
+    web_users_per_day = TOTAL_USERS // DAYS_TO_SIMULATE
     
-    users_per_day = TOTAL_USERS // DAYS_TO_SIMULATE
-    web_users_per_day = int(users_per_day * WEB_USERS_PERCENTAGE)
-    android_users_per_day = users_per_day - web_users_per_day
-
-    print(f"\nUser Split per day:")
-    print(f"  Web Users: {web_users_per_day:,}")
-    print(f"  Android Users: {android_users_per_day:,}")
+    print(f"\nConfiguration:")
+    print(f"  Web Users per day: {web_users_per_day:,}")
     print()
     
     # Simulate each day
@@ -308,31 +302,6 @@ def main():
             
             if (i + 1) % 100 == 0:
                 print(f"  Progress: {i+1:,}/{web_users_per_day:,} users (Current index: {i+1})")
-        
-        # Android users for this day (logic simplified for sequential indexing within a day)
-        # If resume_user was actually meant for the whole day, we might need a different offset.
-        # But let's assume the user just wants to skip the first 5000 users which is exactly 1 day.
-        
-        print(f"\nSending Android events ({android_users_per_day:,} users)...")
-        # Offset i logic to not double skip if web was partially done
-        # For simplicity, if resume_user > web_users_per_day, we handle android.
-        
-        for i in range(android_users_per_day):
-            # If we resume in the middle of a day, we need to decide if resume_user applies to total day or just web.
-            # Let's assume resume_user is the starting web user for now.
-            # If the user said 5000 users done, and web_users_per_day is 3000, they are 2000 into android.
-            
-            # Revised logic for day resumption:
-            current_user_index = web_users_per_day + i
-            if day == resume_day and current_user_index < resume_user:
-                continue
-
-            client_id = generate_client_id()
-            events_sent = generate_user_journey(client_id, "ANDROID", day)
-            day_events += events_sent
-            
-            if (current_user_index + 1) % 100 == 0:
-                print(f"  Progress: {current_user_index + 1:,}/{users_per_day:,} users (Current index: {current_user_index + 1})")
 
         
         total_events_sent += day_events
