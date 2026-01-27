@@ -199,12 +199,25 @@ def send_event(client_id, event_name, platform="WEB", timestamp_micros=None):
             "platform": {"value": "WEB"}
         }
     
-    try:
-        response = requests.post(MP_ENDPOINT, json=payload, timeout=5)
-        return response.status_code == 204  # Success
-    except Exception as e:
-        print(f"Error sending event: {e}")
-        return False
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(MP_ENDPOINT, json=payload, timeout=10)
+            if response.status_code == 204:
+                return True
+            else:
+                print(f"  Warning: Received status {response.status_code} for event {event_name}")
+                return False
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+            if attempt < max_retries - 1:
+                print(f"  Request timed out, retrying ({attempt + 1}/{max_retries})...")
+                time.sleep(1)  # Wait before retrying
+            else:
+                print(f"  Error: Max retries reached for event {event_name}")
+                return False
+        except Exception as e:
+            print(f"Error sending event: {e}")
+            return False
 
 def generate_user_journey(client_id, platform="WEB", day_offset=0):
     """Generate realistic user journey with multiple events"""
