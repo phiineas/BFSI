@@ -12,6 +12,40 @@ export default function ProductDetailScreen() {
     const router = useRouter();
     const product = products.find(p => p.id === id);
 
+    React.useEffect(() => {
+        if (product) {
+            const { logScreenView, logViewProductDetail } = require('../../utils/analytics');
+
+            logScreenView({
+                screen_name: 'ProductDetailScreen',
+                screen_class: 'ProductDetailScreen',
+                screen_category: 'product_detail'
+            });
+
+            logViewProductDetail({
+                product_id: product.id,
+                product_name: product.title,
+                product_category: product.category || 'general',
+                product_interest_rate: product.interestRate,
+                product_rating: 4.5, // Assuming a default or calculated rating if not directly available
+                is_popular: product.popular
+            });
+        }
+    }, [product]);
+
+    const handleApply = () => {
+        if (product) {
+            const { logStartApplication } = require('../../utils/analytics');
+            logStartApplication({
+                product_id: product.id,
+                product_name: product.title,
+                product_category: product.category || 'general',
+                application_source: 'product_detail'
+            });
+        }
+        router.push(`/apply/${id}`);
+    };
+
     if (!product) {
         return (
             <View className="flex-1 justify-center items-center">

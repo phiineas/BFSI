@@ -7,12 +7,36 @@ import { Button } from '../components/ui/button';
 export default function RegisterScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [name, setName] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const router = useRouter();
 
+    React.useEffect(() => {
+        const { logScreenView } = require('../utils/analytics');
+        logScreenView({
+            screen_name: 'RegisterScreen',
+            screen_class: 'RegisterScreen',
+            screen_category: 'auth'
+        });
+    }, []);
+
     const handleRegister = () => {
-        router.replace('/(tabs)');
+        setIsLoading(true);
+        setTimeout(() => {
+            setIsLoading(false);
+
+            // Analytics: Log Registration
+            const { logUserRegistration } = require('../utils/analytics');
+            logUserRegistration({
+                registration_method: 'email',
+                user_type: 'new_customer',
+                registration_source: 'register_screen',
+                account_type: 'individual'
+            });
+
+            router.replace('/(tabs)');
+        }, 1500);
     };
 
     return (

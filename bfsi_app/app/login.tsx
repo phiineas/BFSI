@@ -9,10 +9,34 @@ export default function LoginScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    React.useEffect(() => {
+        const { logScreenView } = require('../utils/analytics');
+        logScreenView({
+            screen_name: 'LoginScreen',
+            screen_class: 'LoginScreen',
+            screen_category: 'auth'
+        });
+    }, []);
     const router = useRouter();
 
-    const handleLogin = () => {
-        router.replace('/(tabs)');
+    const handleSubmit = async () => {
+        setIsLoading(true);
+        // Simulate login API call
+        setTimeout(() => {
+            setIsLoading(false);
+
+            // Analytics: Log Login
+            const { logUserLogin } = require('../utils/analytics');
+            logUserLogin({
+                login_method: 'email_password',
+                user_type: 'existing_customer',
+                login_source: 'login_screen'
+            });
+
+            router.replace('/(tabs)');
+        }, 1500);
     };
 
     return (

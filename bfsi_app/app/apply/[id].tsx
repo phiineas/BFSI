@@ -32,6 +32,16 @@ export default function ApplyScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [applicationId] = useState(`SB-${Math.floor(Math.random() * 900000 + 100000)}`);
+    const { logEvent, logScreenView } = require('../../utils/analytics');
+
+    React.useEffect(() => {
+        logScreenView('ApplyScreen', 'ApplyScreen');
+        logEvent('begin_checkout', {
+            items: [{ item_id: productId, item_name: productTitle }],
+            currency: 'USD',
+            value: 0
+        });
+    }, []);
 
     const [formData, setFormData] = useState({
         firstName: "",
@@ -57,7 +67,13 @@ export default function ApplyScreen() {
 
     const handleNext = () => {
         if (currentStep < steps.length) {
-            setCurrentStep(currentStep + 1);
+            const nextStep = currentStep + 1;
+            setCurrentStep(nextStep);
+            logEvent('checkout_progress', {
+                checkout_step: nextStep,
+                step_name: steps[nextStep - 1].title,
+                items: [{ item_id: productId, item_name: productTitle }]
+            });
         }
     };
 
@@ -69,6 +85,17 @@ export default function ApplyScreen() {
 
     const handleSubmit = () => {
         setIsSubmitting(true);
+
+        logEvent('application_submitted', {
+            product_id: productId,
+            product_name: productTitle,
+            product_category: 'loans', // Dynamic based on product
+            application_id: applicationId,
+            application_amount: 0,
+            application_tenure: 12, // Default
+            time_to_complete: 0 // Should track real time
+        });
+
         setTimeout(() => {
             setIsSubmitting(false);
             setShowSuccess(true);

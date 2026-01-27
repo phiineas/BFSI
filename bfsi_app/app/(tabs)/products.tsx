@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { Badge } from '../../components/ui/badge';
 import { Star, ArrowRight, CheckCircle2 } from 'lucide-react-native';
 import { Button } from '../../components/ui/button';
+import { logScreenView, logViewProductList } from '../../utils/analytics';
 
 const categories = [
     { id: "all", name: "All Products" },
@@ -15,12 +16,27 @@ const categories = [
 ]
 
 export default function ProductsScreen() {
-    const [activeCategory, setActiveCategory] = useState("all");
+    const [selectedCategory, setSelectedCategory] = useState('all');
     const router = useRouter();
 
-    const filteredProducts = activeCategory === "all"
+    const filteredProducts = selectedCategory === "all"
         ? products
-        : products.filter(p => p.category === activeCategory);
+        : products.filter(p => p.category === selectedCategory);
+
+    React.useEffect(() => {
+        logScreenView({
+            screen_name: 'ProductsScreen',
+            screen_class: 'ProductsScreen',
+            screen_category: 'product_listing',
+        });
+
+        logViewProductList({
+            product_category: selectedCategory,
+            product_count: filteredProducts.length,
+            filter_applied: selectedCategory,
+            user_segment: 'general'
+        });
+    }, [selectedCategory]);
 
     return (
         <View className="flex-1 bg-background">
@@ -30,10 +46,10 @@ export default function ProductsScreen() {
                     {categories.map((cat) => (
                         <TouchableOpacity
                             key={cat.id}
-                            onPress={() => setActiveCategory(cat.id)}
-                            className={`px-4 py-2 rounded-full border ${activeCategory === cat.id ? 'bg-primary border-primary' : 'bg-background border-border'}`}
+                            onPress={() => setSelectedCategory(cat.id)}
+                            className={`px-4 py-2 rounded-full border ${selectedCategory === cat.id ? 'bg-primary border-primary' : 'bg-background border-border'}`}
                         >
-                            <Text className={`text-sm font-medium ${activeCategory === cat.id ? 'text-primary-foreground' : 'text-foreground'}`}>
+                            <Text className={`text-sm font-medium ${selectedCategory === cat.id ? 'text-primary-foreground' : 'text-foreground'}`}>
                                 {cat.name}
                             </Text>
                         </TouchableOpacity>

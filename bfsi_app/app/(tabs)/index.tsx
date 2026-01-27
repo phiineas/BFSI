@@ -5,10 +5,19 @@ import { QuickActions } from '../../components/landing/quick-actions';
 import { AdBanner } from '../../components/landing/ad-banner';
 import { CreditCardsSection } from '../../components/landing/credit-cards-section';
 import { ProductsSection } from '../../components/landing/products-section';
+import { logScreenView } from '../../utils/analytics';
 
 export default function HomeScreen() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+
+  React.useEffect(() => {
+    logScreenView({
+      screen_name: 'HomeScreen',
+      screen_class: 'HomeScreen',
+      screen_category: 'home',
+    });
+  }, []);
 
   return (
     <ScrollView className="flex-1 bg-background" showsVerticalScrollIndicator={false}>
