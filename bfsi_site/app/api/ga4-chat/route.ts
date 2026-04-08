@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Client, StdioClientTransport, StreamableHTTPClientTransport } from "@modelcontextprotocol/client"
-// Dummy imports to ensure Vercel bundles these dependencies for the child process
-import * as _admin from "@google-analytics/admin"
-import * as _data from "@google-analytics/data"
-import * as _gsc from "@googleapis/searchconsole"
-import * as _auth from "google-auth-library"
-import fs from "node:fs/promises"
-import path from "node:path"
+import { BetaAnalyticsDataClient } from "@google-analytics/data"
+import { AnalyticsAdminServiceClient } from "@google-analytics/admin"
+import { searchconsole_v1 } from "@googleapis/searchconsole"
+import { GoogleAuth } from "google-auth-library"
 
 type Intent = "sessions" | "top_pages" | "top_country" | "events" | "general"
 
@@ -250,7 +246,6 @@ const buildCandidateArgs = (intent: Intent, question: string) => {
         dimensions: ["country"],
         metrics: ["sessions"],
       },
-      {},
     ]
   }
 
@@ -280,7 +275,6 @@ const buildCandidateArgs = (intent: Intent, question: string) => {
         metrics: ["views"],
         limit: 5,
       },
-      {},
     ]
   }
 
@@ -288,8 +282,7 @@ const buildCandidateArgs = (intent: Intent, question: string) => {
     return [
       {
         ...commonReport,
-      },
-      {},
+      }
     ]
   }
 
@@ -297,8 +290,7 @@ const buildCandidateArgs = (intent: Intent, question: string) => {
     return [
       {
         ...commonReport,
-      },
-      {},
+      }
     ]
   }
 
@@ -311,12 +303,11 @@ const buildCandidateArgs = (intent: Intent, question: string) => {
       dimensions: ["country"],
       metrics: ["activeUsers"],
       limit,
-    },
-    { query: question },
+    }
   ]
 }
 
-const formatToolResult = (result: unknown) => {
+const formatToolResult = (result: any) => {
   const data = result as {
     content?: Array<{ type?: string; text?: string;[key: string]: unknown }>
     structuredContent?: unknown
@@ -361,149 +352,134 @@ const parseServiceAccount = () => {
   }
 }
 
-export async function POST(request: NextRequest) {
-  // Prevent tree-shaking of child process dependencies
-  void [_admin, _data, _gsc, _auth]
+async function executeGa4Tool(
+  toolName: string,
+  args: any,
+  auth: GoogleAuth,
+  propertyId?: string
+): Promise<any> {
+  const pid = args.property_id || args.propertyId || propertyId
+  if (!pid && toolName !== "ping" && toolName !== "get_account_summaries") {
+    throw new Error("GA4_PROPERTY_ID is required for this tool.")
+  }
 
-  let client: Client | undefined
-  let tempServiceAccountPath: string | undefined
+  const formattedPid = pid?.toString().startsWith("properties/") ? pid : `properties/${pid}`
+
+  switch (toolName) {
+    case "ping":
+      return { content: [{ type: "text", text: "pong" }] }
+
+    case "run_report": {
+      const client = new BetaAnalyticsDataClient({ auth })
+      const [response] = await client.runReport({
+        property: formattedPid,
+        dateRanges: args.date_ranges,
+        dimensions: args.dimensions?.map((d: string) => ({ name: d })),
+        metrics: args.metrics?.map((m: string) => ({ name: m })),
+        limit: args.limit,
+        offset: args.offset,
+        dimensionFilter: args.dimension_filter,
+        metricFilter: args.metric_filter,
+      })
+      return { content: [{ type: "text", text: JSON.stringify(response, null, 2) }] }
+    }
+
+    case "run_realtime_report": {
+      const client = new BetaAnalyticsDataClient({ auth })
+      const [response] = await client.runRealtimeReport({
+        property: formattedPid,
+        dimensions: args.dimensions?.map((d: string) => ({ name: d })),
+        metrics: args.metrics?.map((m: string) => ({ name: m })),
+        limit: args.limit,
+        dimensionFilter: args.dimension_filter,
+        metricFilter: args.metric_filter,
+      })
+      return { content: [{ type: "text", text: JSON.stringify(response, null, 2) }] }
+    }
+
+    case "get_account_summaries": {
+      const client = new AnalyticsAdminServiceClient({ auth })
+      const summaries: any[] = []
+      const iterable = client.listAccountSummariesAsync({})
+      for await (const summary of iterable) {
+        summaries.push(summary)
+      }
+      return { content: [{ type: "text", text: JSON.stringify(summaries, null, 2) }] }
+    }
+
+    default:
+      throw new Error(`Tool ${toolName} is not yet implemented in direct mode.`)
+  }
+}
+
+export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { question?: string; mcpAuthToken?: string }
+    const body = (await request.json()) as { question?: string }
     const question = body.question?.trim()
 
     if (!question) {
       return NextResponse.json({ error: "Question is required." }, { status: 400 })
     }
 
-    const mcpUrl = process.env.STAPE_GA4_MCP_URL?.trim()
-    const mcpToken =
-      body.mcpAuthToken?.trim() ||
-      process.env.STAPE_GA4_MCP_AUTH_TOKEN ||
-      process.env.MCP_AUTH_TOKEN
     const ga4PropertyId = process.env.GA4_PROPERTY_ID
+    const serviceAccount = parseServiceAccount()
 
-    client = new Client({ name: "bfsi-ga4-chat", version: "1.0.0" }, { capabilities: {} })
-
-    let transport: StreamableHTTPClientTransport | StdioClientTransport
-
-    if (mcpUrl && mcpToken) {
-      transport = new StreamableHTTPClientTransport(new URL(mcpUrl), {
-        authProvider: {
-          token: async () => mcpToken,
-        },
-      })
-    } else {
-      const serviceAccount = parseServiceAccount()
-      const childEnv: Record<string, string> = Object.fromEntries(
-        Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
-      )
-
-      if (serviceAccount) {
-        tempServiceAccountPath = path.join("/tmp", `ga4-sa-${Date.now()}.json`)
-        await fs.writeFile(tempServiceAccountPath, JSON.stringify(serviceAccount), "utf8")
-        childEnv.GOOGLE_APPLICATION_CREDENTIALS = tempServiceAccountPath
-      }
-
-      transport = new StdioClientTransport({
-        command: "node",
-        args: [path.join(process.cwd(), "node_modules/ga4-mcp/dist/server.js"), "--tools", "ga4"],
-        env: childEnv,
-      })
-    }
-
-    await client.connect(transport)
-
-    const listed = await client.listTools()
-    const tools = listed.tools as ToolInfo[]
-
-    if (!tools.length) {
+    if (!serviceAccount) {
       return NextResponse.json(
-        {
-          error: "Connected to MCP, but no tools were returned by the server.",
-        },
-        { status: 502 },
+        { error: "GA4_SERVICE_ACCOUNT_JSON is not configured." },
+        { status: 500 }
       )
     }
+
+    const auth = new GoogleAuth({
+      credentials: {
+        client_email: serviceAccount.client_email,
+        private_key: serviceAccount.private_key,
+      },
+      scopes: ["https://www.googleapis.com/auth/analytics.readonly"],
+    })
 
     const intent = detectIntent(question)
-    const chosenTool = isRealtimeQuestion(question)
-      ? tools.find((tool) => tool.name === "run_realtime_report") || pickBestTool(tools, intent)
-      : pickBestTool(tools, intent)
+    const isRealtime = isRealtimeQuestion(question)
+    const toolName = isRealtime ? "run_realtime_report" : "run_report"
     const candidateArgs = buildCandidateArgs(intent, question)
+
+    // Mock ToolInfo for withKnownRequiredFields logic
+    const mockTool: ToolInfo = {
+      name: toolName,
+      inputSchema: { required: ["property_id", "date_ranges", "dimensions", "metrics"] }
+    }
 
     let lastError = ""
     for (const rawArgs of candidateArgs) {
-      const args = withKnownRequiredFields(rawArgs, chosenTool, ga4PropertyId, question)
-
-      // If property_id is missing but required, and we still don't have it, throw a helpful error
-      const required = chosenTool.inputSchema?.required || []
-      if (required.some(f => f.toLowerCase().includes("property")) && !args.property_id && !args.propertyId) {
-        throw new Error("GA4_PROPERTY_ID is not configured in the environment variables.")
-      }
+      const args = withKnownRequiredFields(rawArgs, mockTool, ga4PropertyId, question)
 
       try {
-        const toolResult = await client.callTool({
-          name: chosenTool.name,
-          arguments: args,
-        })
-
-        const formattedToolResult = formatToolResult(toolResult)
+        const result = await executeGa4Tool(toolName, args, auth, ga4PropertyId)
+        const formattedToolResult = formatToolResult(result)
 
         const answer = [
-          `MCP tool used: ${chosenTool.name}`,
+          `Tool used: ${toolName}`,
           `Intent detected: ${intent}`,
           `Arguments: ${JSON.stringify(args)}`,
           "",
           formattedToolResult,
         ].join("\n")
 
-        if (
-          answer.includes("MCP error") ||
-          answer.includes("Failed to execute tool") ||
-          answer.toLowerCase().includes("invalid request parameters") ||
-          answer.toLowerCase().includes("unknown dimension") ||
-          answer.toLowerCase().includes("unknown metric")
-        ) {
-          throw new Error(answer)
-        }
-
         return NextResponse.json({ answer })
-      } catch (error) {
-        lastError = error instanceof Error ? error.message : String(error)
+      } catch (error: any) {
+        lastError = error.message
       }
     }
 
     return NextResponse.json(
-      {
-        error: `Connected to MCP but tool execution failed. Last error: ${lastError || "Unknown error"}`,
-      },
-      { status: 502 },
+      { error: `Tool execution failed. Last error: ${lastError}` },
+      { status: 502 }
     )
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected server error"
-
+  } catch (error: any) {
     return NextResponse.json(
-      {
-        error: isAuthError(message)
-          ? "GA4 MCP authentication failed. Provide STAPE_GA4_MCP_AUTH_TOKEN for remote MCP, or use local GA4 MCP with GA4_SERVICE_ACCOUNT_JSON configured."
-          : message,
-      },
-      { status: 500 },
+      { error: error.message || "Unexpected server error" },
+      { status: 500 }
     )
-  } finally {
-    if (client) {
-      try {
-        await client.close()
-      } catch {
-        // no-op
-      }
-    }
-    if (tempServiceAccountPath) {
-      try {
-        await fs.unlink(tempServiceAccountPath)
-      } catch {
-        // no-op
-      }
-    }
   }
 }

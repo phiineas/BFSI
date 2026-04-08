@@ -23,6 +23,14 @@ const nextConfig = {
       "./node_modules/@modelcontextprotocol/sdk/**/*",
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/g/collect",
+        destination: "https://ylawukyi.apd.stape.io/g/collect",
+      },
+    ]
+  },
 }
 
 export default nextConfig
