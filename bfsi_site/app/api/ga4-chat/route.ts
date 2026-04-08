@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Client, StdioClientTransport, StreamableHTTPClientTransport } from "@modelcontextprotocol/client"
+// Dummy imports to ensure Vercel bundles these dependencies for the child process
+import * as _admin from "@google-analytics/admin"
+import * as _data from "@google-analytics/data"
+import * as _gsc from "@googleapis/searchconsole"
+import * as _auth from "google-auth-library"
 import fs from "node:fs/promises"
 import path from "node:path"
 
@@ -357,6 +362,9 @@ const parseServiceAccount = () => {
 }
 
 export async function POST(request: NextRequest) {
+  // Prevent tree-shaking of child process dependencies
+  void [_admin, _data, _gsc, _auth]
+
   let client: Client | undefined
   let tempServiceAccountPath: string | undefined
   try {
