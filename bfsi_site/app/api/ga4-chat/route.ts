@@ -165,12 +165,18 @@ const withKnownRequiredFields = (
 
     if ((key.includes("property") || key.includes("ga4")) && ga4PropertyId) {
       next[field] = ga4PropertyId
+    } else if (key.includes("date_range") && !next[field]) {
+      next[field] = [{ start_date: "30daysAgo", end_date: "today" }]
+    } else if (key.includes("dimension") && !next[field]) {
+      next[field] = ["country"]
+    } else if (key.includes("metric") && !next[field]) {
+      next[field] = ["activeUsers"]
     } else if (key.includes("question") && question) {
       next[field] = question
     } else if (key.includes("query") && question) {
       next[field] = question
     } else if (key.includes("limit")) {
-      next[field] = 5
+      next[field] = next[field] || 5
     }
   }
 
@@ -302,13 +308,12 @@ const buildCandidateArgs = (intent: Intent, question: string) => {
       limit,
     },
     { query: question },
-    {},
   ]
 }
 
 const formatToolResult = (result: unknown) => {
   const data = result as {
-    content?: Array<{ type?: string; text?: string; [key: string]: unknown }>
+    content?: Array<{ type?: string; text?: string;[key: string]: unknown }>
     structuredContent?: unknown
   }
 
@@ -392,8 +397,8 @@ export async function POST(request: NextRequest) {
       }
 
       transport = new StdioClientTransport({
-        command: "npx",
-        args: ["-y", "ga4-mcp", "--tools", "ga4"],
+        command: "node",
+        args: [path.join(process.cwd(), "node_modules/ga4-mcp/dist/server.js"), "--tools", "ga4"],
         env: childEnv,
       })
     }
@@ -421,6 +426,13 @@ export async function POST(request: NextRequest) {
     let lastError = ""
     for (const rawArgs of candidateArgs) {
       const args = withKnownRequiredFields(rawArgs, chosenTool, ga4PropertyId, question)
+
+      // If property_id is missing but required, and we still don't have it, throw a helpful error
+      const required = chosenTool.inputSchema?.required || []
+      if (required.some(f => f.toLowerCase().includes("property")) && !args.property_id && !args.propertyId) {
+        throw new Error("GA4_PROPERTY_ID is not configured in the environment variables.")
+      }
+
       try {
         const toolResult = await client.callTool({
           name: chosenTool.name,
