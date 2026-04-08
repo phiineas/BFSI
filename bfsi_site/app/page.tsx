@@ -7,10 +7,7 @@ import { FeaturesSection } from "@/components/landing/features-section"
 import { StatsSection } from "@/components/landing/stats-section"
 import { TestimonialsSection } from "@/components/landing/testimonials-section"
 import { CTASection } from "@/components/landing/cta-section"
-<<<<<<< HEAD
 import { Ga4Chatbot } from "@/components/ga4-chatbot"
-=======
->>>>>>> origin/main
 
 export default function HomePage() {
   return (
@@ -26,10 +23,7 @@ export default function HomePage() {
         <CTASection />
       </main>
       <Footer />
-<<<<<<< HEAD
       <Ga4Chatbot />
-=======
->>>>>>> origin/main
     </div>
   )
 }

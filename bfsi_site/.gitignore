@@ -19,10 +19,7 @@ yarn-error.log*
 
 # env files
 .env*
-<<<<<<< HEAD
 ga4-service-account.json
-=======
->>>>>>> origin/main
 
 # vercel
 .vercel
