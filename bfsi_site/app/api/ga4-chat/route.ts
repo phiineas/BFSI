@@ -4,7 +4,7 @@ import { AnalyticsAdminServiceClient } from "@google-analytics/admin"
 import { searchconsole_v1 } from "@googleapis/searchconsole"
 import { GoogleAuth } from "google-auth-library"
 
-type Intent = "sessions" | "top_pages" | "top_country" | "events" | "general"
+type Intent = "sessions" | "top_pages" | "top_country" | "events" | "property_metadata" | "general"
 
 type ToolInfo = {
   name: string
@@ -17,6 +17,9 @@ type ToolInfo = {
 
 const detectIntent = (question: string): Intent => {
   const q = question.toLowerCase()
+  if (q.includes("property name") || q.includes("account info") || q.includes("what is the name") || q.includes("which property")) {
+    return "property_metadata"
+  }
   if ((q.includes("session") || q.includes("traffic")) && (q.includes("7") || q.includes("week"))) {
     return "sessions"
   }
@@ -115,6 +118,8 @@ const isActiveUsersQuestion = (question: string) => {
 }
 
 const pickBestTool = (tools: ToolInfo[], intent: Intent) => {
+  if (intent === "property_metadata") return { name: "get_property" } as ToolInfo
+
   const runReportTool = tools.find((tool) => tool.name.toLowerCase() === "run_report")
   const runRealtimeTool = tools.find((tool) => tool.name.toLowerCase() === "run_realtime_report")
 
@@ -132,6 +137,7 @@ const pickBestTool = (tools: ToolInfo[], intent: Intent) => {
     top_pages: ["page", "content", "landing", "view", "performance", "report"],
     top_country: ["country", "location", "geo", "user", "behavior", "report"],
     events: ["event", "conversion", "funnel", "realtime", "report"],
+    property_metadata: ["property", "account", "name", "info"],
     general: ["report", "query", "analytics", "overview"],
   }
 
@@ -185,6 +191,8 @@ const withKnownRequiredFields = (
 }
 
 const buildCandidateArgs = (intent: Intent, question: string) => {
+  if (intent === "property_metadata") return [{}]
+
   const dateRange = inferDateRange(question)
   const metrics = inferMetrics(question)
   const dimensions = inferDimensions(question, intent)
@@ -369,6 +377,12 @@ async function executeGa4Tool(
     case "ping":
       return { content: [{ type: "text", text: "pong" }] }
 
+    case "get_property": {
+      const client = new AnalyticsAdminServiceClient({ auth })
+      const [property] = await client.getProperty({ name: formattedPid })
+      return { content: [{ type: "text", text: JSON.stringify(property, null, 2) }] }
+    }
+
     case "run_report": {
       const client = new BetaAnalyticsDataClient({ auth })
       const [response] = await client.runReport({
@@ -444,7 +458,7 @@ export async function POST(request: NextRequest) {
 
     const intent = detectIntent(question)
     const isRealtime = isRealtimeQuestion(question)
-    const toolName = isRealtime ? "run_realtime_report" : "run_report"
+    const toolName = intent === "property_metadata" ? "get_property" : (isRealtime ? "run_realtime_report" : "run_report")
     const candidateArgs = buildCandidateArgs(intent, question)
 
     // Mock ToolInfo for withKnownRequiredFields logic
