@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "966315019860",
+    "project_id": "tvc-bfsi",
+    "storage_bucket": "tvc-bfsi.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966315019860:android:d87686617090ef1ffca7c1",
+        "android_client_info": {
+          "package_name": "com.needstation.bfsiapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "966315019860-t6mcoesmj05nmu66rmk04htbl4id9734.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC340bh4QfjPUE1wojANiUnv1yua5aUJxw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "966315019860-t6mcoesmj05nmu66rmk04htbl4id9734.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

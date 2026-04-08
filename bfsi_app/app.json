@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "bfsi_app",
+    "slug": "bfsi_app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+
+    "icon": "./assets/images/icon.png",
+    "scheme": "bfsiapp",
+
+    "userInterfaceStyle": "automatic",
+
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+
+    "ios": {
+      "supportsTablet": true
+    },
+
+    "android": {
+      "package": "com.needstation.bfsiapp",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+
+    "plugins": [
+      "expo-router",
+      "expo-build-properties"
+    ],
+
+    "extra": {
+      "eas": {
+        "projectId": "c8333c32-a0f6-4edd-886b-19ebdf195c19"
+      }
+    },
+
+    "cli": {
+      "appVersionSource": "remote"
+    }
+  }
+}
