@@ -13,6 +13,16 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
+  outputFileTracingIncludes: {
+    "/api/ga4-chat": [
+      "./node_modules/@google-analytics/admin/**/*",
+      "./node_modules/@google-analytics/data/**/*",
+      "./node_modules/@googleapis/searchconsole/**/*",
+      "./node_modules/google-auth-library/**/*",
+      "./node_modules/ga4-mcp/**/*",
+      "./node_modules/@modelcontextprotocol/sdk/**/*",
+    ],
+  },
 }
 
 export default nextConfig
