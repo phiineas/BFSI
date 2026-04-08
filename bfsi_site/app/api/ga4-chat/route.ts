@@ -373,7 +373,10 @@ async function executeGa4Tool(
       const client = new BetaAnalyticsDataClient({ auth })
       const [response] = await client.runReport({
         property: formattedPid,
-        dateRanges: args.date_ranges,
+        dateRanges: args.date_ranges?.map((dr: any) => ({
+          startDate: dr.start_date || dr.startDate,
+          endDate: dr.end_date || dr.endDate,
+        })),
         dimensions: args.dimensions?.map((d: string) => ({ name: d })),
         metrics: args.metrics?.map((m: string) => ({ name: m })),
         limit: args.limit,
