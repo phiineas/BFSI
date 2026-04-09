@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 const vertexAI = new VertexAI({
     project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
-    location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
+    location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
 });
 
 export async function POST(req: NextRequest) {
