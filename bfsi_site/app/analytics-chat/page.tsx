@@ -43,10 +43,10 @@ export default function AnalyticsChatPage() {
                 parts: [{ text: msg.content }],
             }));
 
-            const res = await fetch('/api/analytics-chat', {
+            const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: messageToSend, history }),
+                body: JSON.stringify({ query: messageToSend, history }),
             });
 
             const data = await res.json();

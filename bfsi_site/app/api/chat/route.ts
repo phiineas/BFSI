@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
         // 2. Call GA4 MCP runReport
         const mcpParams = {
-            property: process.env.GA4_PROPERTY_ID, // Should be "properties/XXXXXXXXX"
+            property_id: process.env.GA4_PROPERTY_ID, // Should be "262420034"
             metrics: ga4Config.metrics || ["sessions"],
             dimensions: ga4Config.dimensions || ["pagePath"],
             dateRanges: [ga4Config.dateRange || { startDate: "30daysAgo", endDate: "today" }],
