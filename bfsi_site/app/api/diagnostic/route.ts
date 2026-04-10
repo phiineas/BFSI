@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { callGA4MCP } from "@/lib/ga4-mcp";
+import { NextResponse } from "next/server";
+import { ga4Tools } from "@/lib/ga4";
 
 export const runtime = "nodejs";
 
 export async function GET() {
     try {
         // Attempt to list all accessible properties
-        const result = await callGA4MCP("get_account_summaries", {});
+        const result = await ga4Tools.get_account_summaries();
 
         return NextResponse.json({
             success: true,
