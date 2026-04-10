@@ -1,9 +1,23 @@
 // lib/ga4.ts
 
+import fs from 'fs';
+import path from 'path';
+
 /**
  * GA4 MCP Provider (In-Process)
  * Implements the Model Context Protocol (MCP) tool interface for GA4.
  */
+
+function logToFile(type: string, data: any) {
+    try {
+        const logPath = path.join(process.cwd(), 'logs.txt');
+        const timestamp = new Date().toISOString();
+        const entry = `[${timestamp}] [${type}] ${JSON.stringify(data, null, 2)}\n${'-'.repeat(50)}\n`;
+        fs.appendFileSync(logPath, entry);
+    } catch (err) {
+        console.error('Logging failed:', err);
+    }
+}
 
 let cachedToken: { token: string; expiry: number } | null = null;
 
@@ -120,6 +134,8 @@ export const ga4Tools = {
                 metricFilter: args.metric_filter,
             };
 
+            logToFile('GA4_REQUEST', { url, body });
+
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -127,6 +143,7 @@ export const ga4Tools = {
             });
 
             const text = await res.text();
+            logToFile('GA4_RESPONSE', { status: res.status, body: text.substring(0, 1000) });
             try {
                 return JSON.parse(text);
             } catch {

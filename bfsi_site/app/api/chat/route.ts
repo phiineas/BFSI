@@ -48,6 +48,15 @@ export async function POST(req: NextRequest) {
         const configText = configResult.response.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
         const ga4Config = JSON.parse(configText.replace(/```json|```/g, "").trim());
 
+        // Log the AI Plan
+        try {
+            const fs = await import('fs');
+            const path = await import('path');
+            const logPath = path.join(process.cwd(), 'logs.txt');
+            const entry = `[${new Date().toISOString()}] [AI_PLAN] Query: "${query}"\nPlan: ${JSON.stringify(ga4Config, null, 2)}\n${'-'.repeat(50)}\n`;
+            fs.appendFileSync(logPath, entry);
+        } catch { }
+
         // 2. Call GA4 directly (In-process)
         const ga4Data = await ga4Tools.run_report({
             property_id: process.env.GA4_PROPERTY_ID,
