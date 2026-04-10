@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callGA4MCP } from "@/lib/ga4-mcp";
+import { ga4Tools } from "@/lib/ga4";
 import { generateInsights } from "@/lib/vertex-ai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -44,15 +44,13 @@ export async function POST(req: NextRequest) {
         const configText = configResult.response.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
         const ga4Config = JSON.parse(configText.replace(/```json|```/g, "").trim());
 
-        // 2. Call GA4 MCP runReport
-        const mcpParams = {
-            property_id: process.env.GA4_PROPERTY_ID, // Should be "262420034"
+        // 2. Call GA4 directly (In-process)
+        const ga4Data = await ga4Tools.run_report({
+            property_id: process.env.GA4_PROPERTY_ID,
             metrics: ga4Config.metrics || ["sessions"],
             dimensions: ga4Config.dimensions || ["pagePath"],
-            dateRanges: [ga4Config.dateRange || { startDate: "30daysAgo", endDate: "today" }],
-        };
-
-        const ga4Data = await callGA4MCP("runReport", mcpParams);
+            date_ranges: [ga4Config.dateRange || { startDate: "30daysAgo", endDate: "today" }],
+        });
 
         // 3. Generate final insights
         const insights = await generateInsights(query, ga4Data);

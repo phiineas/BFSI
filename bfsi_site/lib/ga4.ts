@@ -33,8 +33,8 @@ export async function getGoogleAccessToken(scopes: string[]): Promise<string> {
     // In production, you'd cache per scope combination.
     if (cachedToken && cachedToken.expiry > now + 60) return cachedToken.token;
 
-    const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-    if (!saJson) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is missing');
+    const saJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+    if (!saJson) throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON is missing');
 
     const sa = JSON.parse(saJson);
     const header = { alg: 'RS256', typ: 'JWT' };
