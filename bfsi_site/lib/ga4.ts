@@ -1,4 +1,4 @@
-// lib/ga4.ts
+import { BigQuery } from '@google-cloud/bigquery';
 
 /**
  * GA4 MCP Provider (In-Process)
