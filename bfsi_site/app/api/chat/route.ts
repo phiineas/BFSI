@@ -30,12 +30,12 @@ export async function POST(req: NextRequest) {
 
       Return ONLY a JSON object:
       {
-        "metrics": ["metricName1", "metricName2"],
-        "dimensions": ["dimensionName1", "dimensionName2"],
+        "metrics": ["sessions", "activeUsers", "averageSessionDuration"],
+        "dimensions": ["pagePath"],
         "dateRange": { "startDate": "30daysAgo", "endDate": "today" }
       }
       
-      Metric examples: sessions, activeUsers, bounceRate, conversions, totalRevenue, screenPageViews.
+      Metric examples: sessions, activeUsers, bounceRate, conversions, totalRevenue, screenPageViews, averageSessionDuration.
       Dimension examples: pagePath, sessionSource, country, deviceCategory, date.
       Use standard GA4 API naming conventions.
     `;
