@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-pro-exp-02-05" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
         const configPrompt = `
       You are a GA4 query planner. Based on the user's question, decide the best metrics, dimensions, and date ranges.
       User Question: "${query}"
