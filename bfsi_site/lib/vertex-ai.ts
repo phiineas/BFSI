@@ -3,9 +3,14 @@ import { VertexAI } from "@google-cloud/vertexai";
 // Move initialization inside the function to avoid build-time errors
 
 export async function generateInsights(userQuery: string, ga4Data: any): Promise<string> {
+    const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+        ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+        : undefined;
+
     const vertexAI = new VertexAI({
         project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
         location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
+        googleAuthOptions: credentials ? { credentials } : undefined
     });
     const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 

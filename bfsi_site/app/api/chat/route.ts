@@ -15,17 +15,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Query is required" }, { status: 400 });
         }
 
-        // 1. Initialize VertexAI at runtime
-        if (!process.env.GOOGLE_CLOUD_PROJECT_ID) {
+        // 1. Initialize VertexAI at runtime with direct credentials
+        if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
             return NextResponse.json({
-                error: "GOOGLE_CLOUD_PROJECT_ID is missing from your Vercel Environment Variables.",
-                tip: "Go to Vercel > Settings > Environment Variables and add GOOGLE_CLOUD_PROJECT_ID with your GCP project ID."
+                error: "Missing GOOGLE_CLOUD_PROJECT_ID or GOOGLE_APPLICATION_CREDENTIALS_JSON in Vercel.",
+                tip: "Ensure these are added in Vercel Settings > Environment Variables."
             }, { status: 500 });
         }
 
+        const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
         const vertexAI = new VertexAI({
             project: process.env.GOOGLE_CLOUD_PROJECT_ID,
             location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
+            googleAuthOptions: { credentials }
         });
 
         const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-pro" });
