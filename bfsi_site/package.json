@@ -15,6 +15,7 @@
     "@google-analytics/data": "^5.2.1",
     "@google-cloud/bigquery": "^8.1.1",
     "@google-cloud/vertexai": "^1.11.0",
+    "@google/generative-ai": "^0.24.1",
     "@googleapis/searchconsole": "^6.0.1",
     "@hookform/resolvers": "^3.10.0",
     "@modelcontextprotocol/client": "^2.0.0-alpha.2",

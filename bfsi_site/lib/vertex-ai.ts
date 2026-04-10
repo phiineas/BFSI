@@ -1,16 +1,16 @@
-import { VertexAI } from "@google-cloud/vertexai";
-import { initGoogleAuth } from "./auth";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Move initialization inside the function to avoid build-time errors
-
+/**
+ * Generate insights using the Google AI SDK (Gemini API Key).
+ */
 export async function generateInsights(userQuery: string, ga4Data: any): Promise<string> {
-    initGoogleAuth();
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        return "GEMINI_API_KEY is missing. Insights cannot be generated.";
+    }
 
-    const vertexAI = new VertexAI({
-        project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
-        location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
-    });
-    const model = vertexAI.getGenerativeModel({ model: "gemini-2.0-pro-exp-02-05" });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-pro-exp-02-05" });
 
     const prompt = `
 You are a Google Analytics 4 expert analyst and part of the Tatvic Analytics team, working with Tatvic's website data (https://www.tatvic.com).
@@ -33,10 +33,9 @@ If data is empty or error, say "No data available for this query. Try adjusting 
 
     try {
         const result = await model.generateContent(prompt);
-        const response = result.response;
-        return response.candidates?.[0]?.content?.parts?.[0]?.text || "Could not generate insights.";
+        return result.response.text() || "Could not generate insights.";
     } catch (error: any) {
-        console.error("Vertex AI Error:", error);
+        console.error("Gemini AI Error:", error);
         return `Error generating insights: ${error.message}`;
     }
 }
