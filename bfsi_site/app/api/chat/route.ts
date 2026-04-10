@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
             googleAuthOptions: { credentials }
         });
 
-        const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const configPrompt = `
       You are a GA4 query planner. Based on the user's question, decide the best metrics, dimensions, and date ranges.
       User Question: "${query}"

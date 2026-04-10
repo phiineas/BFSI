@@ -12,7 +12,7 @@ export async function generateInsights(userQuery: string, ga4Data: any): Promise
         location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
         googleAuthOptions: credentials ? { credentials } : undefined
     });
-    const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
 You are a Google Analytics 4 expert analyst and part of the Tatvic Analytics team, working with Tatvic's website data (https://www.tatvic.com).
