@@ -1,4 +1,4 @@
-import { BigQuery } from '@google-cloud/bigquery';
+// lib/ga4.ts
 
 /**
  * GA4 MCP Provider (In-Process)
@@ -29,8 +29,6 @@ export async function getGoogleAccessToken(scopes: string[]): Promise<string> {
     const scopeKey = scopes.sort().join(',');
     const now = Math.floor(Date.now() / 1000);
 
-    // Note: For simplicity in this demo, we cache only one token.
-    // In production, you'd cache per scope combination.
     if (cachedToken && cachedToken.expiry > now + 60) return cachedToken.token;
 
     const saJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
@@ -105,28 +103,38 @@ export const ga4Tools = {
         metric_filter?: any;
     }) => {
         const pid = args.property_id || process.env.GA4_PROPERTY_ID;
-        if (!pid) throw new Error('property_id is required');
+        if (!pid) return { error: 'GA4_PROPERTY_ID is missing from environment' };
 
-        const token = await getGA4Token();
-        const formattedPid = pid.startsWith('properties/') ? pid : `properties/${pid}`;
-        const url = `https://analyticsdata.googleapis.com/v1beta/${formattedPid}:runReport`;
+        try {
+            const token = await getGA4Token();
+            const formattedPid = pid.startsWith('properties/') ? pid : `properties/${pid}`;
+            const url = `https://analyticsdata.googleapis.com/v1beta/${formattedPid}:runReport`;
 
-        const body = {
-            dateRanges: args.date_ranges,
-            dimensions: args.dimensions?.map(name => ({ name })),
-            metrics: args.metrics?.map(name => ({ name })),
-            limit: args.limit || 10,
-            offset: args.offset || 0,
-            dimensionFilter: args.dimension_filter,
-            metricFilter: args.metric_filter,
-        };
+            const body = {
+                dateRanges: args.date_ranges,
+                dimensions: args.dimensions?.map(name => ({ name })),
+                metrics: args.metrics?.map(name => ({ name })),
+                limit: args.limit || 10,
+                offset: args.offset || 0,
+                dimensionFilter: args.dimension_filter,
+                metricFilter: args.metric_filter,
+            };
 
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        return res.json();
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+
+            const text = await res.text();
+            try {
+                return JSON.parse(text);
+            } catch {
+                return { error: `GA4 API Error (Status ${res.status}): ${text.substring(0, 500)}` };
+            }
+        } catch (error: any) {
+            return { error: error.message || 'Unknown network error' };
+        }
     },
 
     run_realtime_report: async (args: {
@@ -138,45 +146,36 @@ export const ga4Tools = {
         metric_filter?: any;
     }) => {
         const pid = args.property_id || process.env.GA4_PROPERTY_ID;
-        if (!pid) throw new Error('property_id is required');
+        if (!pid) return { error: 'GA4_PROPERTY_ID is missing from environment' };
 
-        const token = await getGA4Token();
-        const formattedPid = pid.startsWith('properties/') ? pid : `properties/${pid}`;
-        const url = `https://analyticsdata.googleapis.com/v1beta/${formattedPid}:runRealtimeReport`;
+        try {
+            const token = await getGA4Token();
+            const formattedPid = pid.startsWith('properties/') ? pid : `properties/${pid}`;
+            const url = `https://analyticsdata.googleapis.com/v1beta/${formattedPid}:runRealtimeReport`;
 
-        const body = {
-            dimensions: args.dimensions?.map(name => ({ name })),
-            metrics: args.metrics?.map(name => ({ name })),
-            limit: args.limit || 10,
-            dimensionFilter: args.dimension_filter,
-            metricFilter: args.metric_filter,
-        };
+            const body = {
+                dimensions: args.dimensions?.map(name => ({ name })),
+                metrics: args.metrics?.map(name => ({ name })),
+                limit: args.limit || 10,
+                dimensionFilter: args.dimension_filter,
+                metricFilter: args.metric_filter,
+            };
 
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        return res.json();
-    },
-};
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
 
-/**
- * BigQuery Tools Implementation
- */
-export const bigqueryTools = {
-    run_sql: async (args: { sql: string }) => {
-        const saJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-        if (!saJson) throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON is missing');
-
-        const sa = JSON.parse(saJson);
-        const bq = new BigQuery({
-            projectId: process.env.GOOGLE_BIGQUERY_PROJECT_ID || sa.project_id,
-            credentials: sa,
-        });
-
-        const [rows] = await bq.query({ query: args.sql });
-        return rows;
+            const text = await res.text();
+            try {
+                return JSON.parse(text);
+            } catch {
+                return { error: `GA4 Realtime API Error (Status ${res.status}): ${text.substring(0, 500)}` };
+            }
+        } catch (error: any) {
+            return { error: error.message || 'Unknown network error' };
+        }
     },
 };
 
@@ -184,7 +183,7 @@ export const bigqueryTools = {
  * MCP-compliant tool execution wrapper
  */
 export async function callMCPTool(name: string, args: any) {
-    const tool = (ga4Tools as any)[name] || (bigqueryTools as any)[name];
+    const tool = (ga4Tools as any)[name];
     if (!tool) throw new Error(`Tool ${name} not found`);
 
     const result = await tool(args);
@@ -202,6 +201,7 @@ export async function callMCPTool(name: string, args: any) {
 export function formatMCPResultForLLM(mcpResult: any): string {
     try {
         const data = JSON.parse(mcpResult.content[0].text);
+        if (data.error) return `ERROR: ${data.error}`;
         if (!data.rows) return mcpResult.content[0].text;
 
         const headers = [
