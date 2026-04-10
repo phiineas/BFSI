@@ -16,8 +16,15 @@ export async function POST(req: NextRequest) {
         }
 
         // 1. Initialize VertexAI at runtime
+        if (!process.env.GOOGLE_CLOUD_PROJECT_ID) {
+            return NextResponse.json({
+                error: "GOOGLE_CLOUD_PROJECT_ID is missing from your Vercel Environment Variables.",
+                tip: "Go to Vercel > Settings > Environment Variables and add GOOGLE_CLOUD_PROJECT_ID with your GCP project ID."
+            }, { status: 500 });
+        }
+
         const vertexAI = new VertexAI({
-            project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
+            project: process.env.GOOGLE_CLOUD_PROJECT_ID,
             location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
         });
 
