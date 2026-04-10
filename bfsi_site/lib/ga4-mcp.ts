@@ -9,31 +9,26 @@ import { initGoogleAuth } from "./auth";
  * Calls the GA4 MCP server using stdio transport.
  * Uses the 'ga4-mcp' package as a fallback for the potentially unavailable '@googleanalytics/google-analytics-mcp'.
  */
-export async function callGA4MCP(toolName: string, params: object) {
-    const packageName = "ga4-mcp";
+const transport = new StdioClientTransport({
+    command: "node",
+    args: [path.join(process.cwd(), "node_modules/ga4-mcp/dist/server.js")],
+    env: {
+        ...process.env,
+        GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
+    },
+});
 
-    const credentialsPath = initGoogleAuth() || process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+const client = new Client({ name: "gbia-client", version: "1.0.0" });
 
-    const transport = new StdioClientTransport({
-        command: "npx",
-        args: ["-y", packageName],
-        env: {
-            ...process.env,
-            GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
-        },
-    });
-
-    const client = new Client({ name: "gbia-client", version: "1.0.0" });
-
+try {
+    await client.connect(transport);
+    const result = await client.callTool({ name: toolName, arguments: params as any });
+    return result;
+} finally {
     try {
-        await client.connect(transport);
-        const result = await client.callTool({ name: toolName, arguments: params as any });
-        return result;
-    } finally {
-        try {
-            await client.close();
-        } catch (e) {
-            // Ignore close errors
-        }
+        await client.close();
+    } catch (e) {
+        // Ignore close errors
     }
+}
 }
