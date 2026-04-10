@@ -162,10 +162,29 @@ export const ga4Tools = {
 };
 
 /**
+ * BigQuery Tools Implementation
+ */
+export const bigqueryTools = {
+    run_sql: async (args: { sql: string }) => {
+        const saJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+        if (!saJson) throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON is missing');
+
+        const sa = JSON.parse(saJson);
+        const bq = new BigQuery({
+            projectId: process.env.GOOGLE_BIGQUERY_PROJECT_ID || sa.project_id,
+            credentials: sa,
+        });
+
+        const [rows] = await bq.query({ query: args.sql });
+        return rows;
+    },
+};
+
+/**
  * MCP-compliant tool execution wrapper
  */
 export async function callMCPTool(name: string, args: any) {
-    const tool = (ga4Tools as any)[name];
+    const tool = (ga4Tools as any)[name] || (bigqueryTools as any)[name];
     if (!tool) throw new Error(`Tool ${name} not found`);
 
     const result = await tool(args);
