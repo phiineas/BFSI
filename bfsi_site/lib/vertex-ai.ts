@@ -9,7 +9,7 @@ export async function generateInsights(userQuery: string, ga4Data: any): Promise
     const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
     const prompt = `
-You are a Google Analytics 4 expert analyst and part of the TVC Aethrix team, working with Tatvic's website data (https://www.tatvic.com).
+You are a Google Analytics 4 expert analyst and part of the Tatvic Analytics team, working with Tatvic's website data (https://www.tatvic.com).
 
 User asked: "${userQuery}"
 

@@ -30,13 +30,13 @@ export function Ga4Chatbot() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/ga4-chat", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: trimmed }),
+        body: JSON.stringify({ query: trimmed }),
       })
 
-      const payload = (await response.json()) as { answer?: string; error?: string }
+      const payload = (await response.json()) as { insights?: string; error?: string }
       if (!response.ok) {
         throw new Error(payload.error || "Request failed")
       }
@@ -45,7 +45,7 @@ export function Ga4Chatbot() {
         ...prev,
         {
           role: "assistant",
-          content: payload.answer || "I could not produce an answer.",
+          content: payload.insights || "I could not produce an answer.",
         },
       ])
     } catch (error) {
@@ -80,11 +80,10 @@ export function Ga4Chatbot() {
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
-                className={`rounded-lg px-3 py-2 ${
-                  message.role === "user"
+                className={`rounded-lg px-3 py-2 ${message.role === "user"
                     ? "ml-6 bg-primary text-primary-foreground"
                     : "mr-6 bg-muted"
-                }`}
+                  }`}
               >
                 {message.content}
               </div>
