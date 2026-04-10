@@ -37,7 +37,16 @@ export function Ga4Chatbot() {
         body: JSON.stringify({ query: trimmed }),
       })
 
-      const payload = (await response.json()) as { insights?: string; error?: string }
+      const text = await response.text()
+      let payload: { insights?: string; error?: string } = {}
+
+      try {
+        payload = JSON.parse(text)
+      } catch {
+        // Fallback for non-JSON errors (like Vercel 500 pages)
+        throw new Error(`Server returned non-JSON response: ${text.substring(0, 200)}`)
+      }
+
       if (!response.ok) {
         throw new Error(payload.error || "Request failed")
       }
