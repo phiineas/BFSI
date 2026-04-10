@@ -5,10 +5,7 @@ import { VertexAI } from "@google-cloud/vertexai";
 
 export const runtime = "nodejs";
 
-const vertexAI = new VertexAI({
-    project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
-    location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
-});
+// Move initialization inside the handler to avoid build-time errors when env vars are missing
 
 export async function POST(req: NextRequest) {
     try {
@@ -18,7 +15,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Query is required" }, { status: 400 });
         }
 
-        // 1. Quick Gemini call to decide GA4 parameters
+        // 1. Initialize VertexAI at runtime
+        const vertexAI = new VertexAI({
+            project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
+            location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
+        });
+
         const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-pro" });
         const configPrompt = `
       You are a GA4 query planner. Based on the user's question, decide the best metrics, dimensions, and date ranges.

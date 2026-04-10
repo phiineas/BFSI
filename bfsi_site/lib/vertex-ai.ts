@@ -1,11 +1,12 @@
 import { VertexAI } from "@google-cloud/vertexai";
 
-const vertexAI = new VertexAI({
-    project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
-    location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
-});
+// Move initialization inside the function to avoid build-time errors
 
 export async function generateInsights(userQuery: string, ga4Data: any): Promise<string> {
+    const vertexAI = new VertexAI({
+        project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
+        location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
+    });
     const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
     const prompt = `
