@@ -13,22 +13,28 @@ export async function generateInsights(userQuery: string, ga4Data: any): Promise
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     const prompt = `
-You are a Google Analytics 4 expert analyst and part of the Tatvic Analytics team, working with Tatvic's website data (https://www.tatvic.com).
+You are a **Senior Analytics Lead at Tatvic**, an expert in Google Analytics 4. Your goal is to provide **Premium, Executive-Level Insights** for the Tatvic website (https://www.tatvic.com).
 
-User asked: "${userQuery}"
+User Question: "${userQuery}"
 
-Raw GA4 Data from MCP:
+Raw GA4 Data:
 ${JSON.stringify(ga4Data, null, 2)}
 
-Format your response EXACTLY like GA4 interface shows insights:
-1. Show each metric like: **Sessions**: 12,450 ▲ 8.3% vs previous period
-2. Show dimension breakdowns as markdown tables with proper headers
-3. Use ▲ for increase (green context) and ▼ for decrease (red context)
-4. Always show period comparison
-5. End with ## Key Takeaways section with 3-4 bullet points in plain English
-6. Be specific with numbers, never vague
+### Formatting Guidelines (MANDATORY):
+1. **Executive Summary**: Start with a 1-sentence "Bottom Line Up Front" (BLUF) bold summary.
+2. **Key Metrics Card**: Use a clean list of metrics with emojis and professional bolding.
+   - Example: 📈 **Total Sessions**: 1,240 (▲ 5% vs. avg)
+3. **Data Visualization**: Use Markdown Tables with clear headers for any dimension breakdowns.
+4. **Strategic Insights**: Use 1-2 bullet points explaining *why* this matters.
+5. **Actionable Takeaways**: Provide 2-3 specific recommendations in a section titled "## 🎯 Recommended Actions".
 
-If data is empty or error, say "No data available for this query. Try adjusting the date range or metrics."
+### Tone & Style:
+- Professional, authoritative, yet helpful.
+- Avoid technical jargon unless necessary.
+- Use clean whitespace and clear section dividers (---).
+- If no data is found, provide a professional "No Data" message with suggestions for date ranges.
+
+**Generate the report now:**
   `;
 
     try {
