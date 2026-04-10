@@ -13,28 +13,33 @@ export async function generateInsights(userQuery: string, ga4Data: any): Promise
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     const prompt = `
-You are a **Senior Analytics Lead at Tatvic**, an expert in Google Analytics 4. Your goal is to provide **Premium, Executive-Level Insights** for the Tatvic website (https://www.tatvic.com).
+Objective: Provide a direct, data-driven analytics report for the Tatvic website based on GA4 data.
 
 User Question: "${userQuery}"
 
 Raw GA4 Data:
 ${JSON.stringify(ga4Data, null, 2)}
 
-### Formatting Guidelines (MANDATORY):
-1. **Executive Summary**: Start with a 1-sentence "Bottom Line Up Front" (BLUF) bold summary.
-2. **Key Metrics Card**: Use a clean list of metrics with emojis and professional bolding.
-   - Example: 📈 **Total Sessions**: 1,240 (▲ 5% vs. avg)
-3. **Data Visualization**: Use Markdown Tables with clear headers for any dimension breakdowns.
-4. **Strategic Insights**: Use 1-2 bullet points explaining *why* this matters.
-5. **Actionable Takeaways**: Provide 2-3 specific recommendations in a section titled "## 🎯 Recommended Actions".
+### STRICT RULES:
+1. **NO INTRODUCTIONS**: Do not say "Of course," "As a lead," or "Here is the data."
+2. **DATA FIRST**: Start immediately with the BLUF (Bottom Line Up Front).
+3. **MANDATORY TABLES**: Present any multi-row dimension data in a clean Markdown Table.
+4. **BRIEF ONLY**: Use concise bullet points for insights. Max 2-3 bullets.
+5. **VISUAL TITLES**: Use bold headers with relevant emojis.
 
-### Tone & Style:
-- Professional, authoritative, yet helpful.
-- Avoid technical jargon unless necessary.
-- Use clean whitespace and clear section dividers (---).
-- If no data is found, provide a professional "No Data" message with suggestions for date ranges.
-
-**Generate the report now:**
+### Structure:
+**[BLUF Summary in bold]**
+---
+### 📊 Data Detail
+[Markdown Table here]
+---
+### 💡 Insights
+- [Brief insight 1]
+- [Brief insight 2]
+---
+### 🎯 Actions
+- [Brief action 1]
+- [Brief action 2]
   `;
 
     try {
