@@ -13,33 +13,25 @@ export async function generateInsights(userQuery: string, ga4Data: any): Promise
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     const prompt = `
-Objective: Provide a direct, data-driven analytics report for the Tatvic website based on GA4 data.
+Objective: Mimic the Google Analytics 4 (GA4) interface style. Present data directly and cleanly.
 
 User Question: "${userQuery}"
 
 Raw GA4 Data:
 ${JSON.stringify(ga4Data, null, 2)}
 
-### STRICT RULES:
-1. **NO INTRODUCTIONS**: Do not say "Of course," "As a lead," or "Here is the data."
-2. **DATA FIRST**: Start immediately with the BLUF (Bottom Line Up Front).
-3. **MANDATORY TABLES**: Present any multi-row dimension data in a clean Markdown Table.
-4. **BRIEF ONLY**: Use concise bullet points for insights. Max 2-3 bullets.
-5. **VISUAL TITLES**: Use bold headers with relevant emojis.
+### OUTPUT RULES (CRITICAL):
+1. **NO FILLER**: No "Based on the data," "Here is the report," or intros/outros.
+2. **CONDITIONAL FORMATTING**:
+   - **Scenario A (List/Table)**: If the data has multiple rows/dimensions (e.g., top pages, sources, countries), use a **Markdown Table** with GA4-standard headers (e.g., "Page path and screen class", "Views", "Active users").
+   - **Scenario B (Single Metric)**: If the answer is a single number or simple count (e.g., "How many users?"), provide a **single concise sentence** (e.g., "There were 1,240 active users yesterday.").
 
-### Structure:
-**[BLUF Summary in bold]**
----
-### 📊 Data Detail
-[Markdown Table here]
----
-### 💡 Insights
-- [Brief insight 1]
-- [Brief insight 2]
----
-### 🎯 Actions
-- [Brief action 1]
-- [Brief action 2]
+3. **STYLE**:
+   - Use bold for key numbers.
+   - Use standard GA4 terminology.
+   - Do NOT include "Insights" or "Actions" sections unless the user specifically asks "Why?" or "What should I do?". Just provide the data requested.
+
+Start Output Now:
   `;
 
     try {
