@@ -9,7 +9,7 @@ export async function generateInsights(userQuery: string, ga4Data: any): Promise
 
     const vertexAI = new VertexAI({
         project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
-        location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
+        location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
         googleAuthOptions: credentials ? { credentials } : undefined
     });
     const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-pro" });

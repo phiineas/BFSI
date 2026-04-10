@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
         const vertexAI = new VertexAI({
             project: process.env.GOOGLE_CLOUD_PROJECT_ID,
-            location: process.env.GOOGLE_CLOUD_LOCATION || "asia-south1",
+            location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
             googleAuthOptions: { credentials }
         });
 
