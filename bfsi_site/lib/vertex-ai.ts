@@ -1,18 +1,16 @@
 import { VertexAI } from "@google-cloud/vertexai";
+import { initGoogleAuth } from "./auth";
 
 // Move initialization inside the function to avoid build-time errors
 
 export async function generateInsights(userQuery: string, ga4Data: any): Promise<string> {
-    const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
-        ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-        : undefined;
+    initGoogleAuth();
 
     const vertexAI = new VertexAI({
         project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
         location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
-        googleAuthOptions: credentials ? { credentials } : undefined
     });
-    const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = vertexAI.getGenerativeModel({ model: "gemini-2.0-pro-exp-02-05" });
 
     const prompt = `
 You are a Google Analytics 4 expert analyst and part of the Tatvic Analytics team, working with Tatvic's website data (https://www.tatvic.com).

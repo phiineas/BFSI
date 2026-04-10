@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { callGA4MCP } from "@/lib/ga4-mcp";
 import { generateInsights } from "@/lib/vertex-ai";
 import { VertexAI } from "@google-cloud/vertexai";
+import { initGoogleAuth } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -15,22 +16,22 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Query is required" }, { status: 400 });
         }
 
-        // 1. Initialize VertexAI at runtime with direct credentials
-        if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+        // 1. Initialize Authentication and VertexAI at runtime
+        initGoogleAuth();
+
+        if (!process.env.GOOGLE_CLOUD_PROJECT_ID) {
             return NextResponse.json({
-                error: "Missing GOOGLE_CLOUD_PROJECT_ID or GOOGLE_APPLICATION_CREDENTIALS_JSON in Vercel.",
-                tip: "Ensure these are added in Vercel Settings > Environment Variables."
+                error: "Missing GOOGLE_CLOUD_PROJECT_ID in Vercel settings.",
+                tip: "Ensure this is added in Vercel Settings > Environment Variables."
             }, { status: 500 });
         }
 
-        const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
         const vertexAI = new VertexAI({
             project: process.env.GOOGLE_CLOUD_PROJECT_ID,
             location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
-            googleAuthOptions: { credentials }
         });
 
-        const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = vertexAI.getGenerativeModel({ model: "gemini-2.0-pro-exp-02-05" });
         const configPrompt = `
       You are a GA4 query planner. Based on the user's question, decide the best metrics, dimensions, and date ranges.
       User Question: "${query}"
