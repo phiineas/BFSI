@@ -10,7 +10,7 @@ import path from 'path';
 
 function logToFile(type: string, data: any) {
     try {
-        const logPath = path.join(process.cwd(), 'logs.txt');
+        const logPath = path.join(process.cwd(), '..', 'logs.txt');
         const timestamp = new Date().toISOString();
         const entry = `[${timestamp}] [${type}] ${JSON.stringify(data, null, 2)}\n${'-'.repeat(50)}\n`;
         fs.appendFileSync(logPath, entry);
